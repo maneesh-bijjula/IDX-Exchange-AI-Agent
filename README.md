@@ -100,15 +100,33 @@ The following tables were imported and cross-checked successfully:
 
 ## Week 2: Natural Language Property Search
 
-Week 2 adds the natural language front end for property search. The parser accepts free-text real estate queries and converts them into structured filters that can later be used by the MySQL query layer.
+For Week 2, I built the first version of the natural language property search parser. The goal was to take normal user messages from WhatsApp and turn them into a structured filter object that can later be passed into the MySQL query layer.
 
-Example query:
+The main implementation lives in `src/propertyQueryParser.ts`, with validation coverage in `tests/propertyQueryParser.test.ts`.
+
+### What the Parser Does
+
+The parser currently extracts:
+
+- City
+- Maximum price
+- Minimum bedrooms
+- Minimum bathrooms
+- Minimum square footage
+- Property type
+- Pool requirement
+- View requirement
+- Maximum HOA fee
+
+It also maps those extracted values to the matching `rets_property` database columns so Week 3 can use the output to build SQL queries.
+
+### Example Query
 
 ```txt
 Show me 3-bedroom condos in Irvine under $1.5M with a pool.
 ```
 
-Example parsed output:
+### Parsed Output
 
 ```json
 {
@@ -120,11 +138,22 @@ Example parsed output:
   "type": "Condominium",
   "pool": "True",
   "hasView": null,
-  "maxHoa": null
+  "maxHoa": null,
+  "dbColumnFilters": {
+    "L_City": "Irvine",
+    "L_SystemPrice": {
+      "lte": 1500000
+    },
+    "L_Keyword2": {
+      "gte": 3
+    },
+    "L_Type_": "Condominium",
+    "PoolPrivateYN": "True"
+  }
 }
 ```
 
-### Supported Filters
+### Database Mapping
 
 | User Intent | Database Column | Example |
 | --- | --- | --- |
@@ -138,9 +167,27 @@ Example parsed output:
 | View | `ViewYN` | `True` |
 | Max HOA | `AssociationFee` | `500` |
 
-### Week 2 Deliverable
+### Test Coverage
 
-An OpenClaw-ready TypeScript parser that accepts a free-text query and returns a structured filter object, validated against 12 test queries.
+I added 12 test queries covering different user phrasings, including:
+
+- Condos in Irvine under `$1.5M` with a pool
+- Newport Beach homes with beds, baths, price, and ocean view
+- Townhomes with minimum square footage
+- HOA limits
+- Single-family homes
+- Land queries
+- Decimal bathrooms like `2.5 baths`
+- Compact aliases like `3 br 2 ba`
+- Unsupported queries returning empty filters
+
+The tests can be run with:
+
+```bash
+npm test
+```
+
+Current validation status: 12 tests passing.
 
 ## Notes
 
