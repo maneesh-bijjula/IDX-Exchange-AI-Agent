@@ -98,6 +98,50 @@ The following tables were imported and cross-checked successfully:
 - Email drafting assistant
 - Human approval workflow for sensitive actions
 
+## Week 2: Natural Language Property Search
+
+Week 2 adds the natural language front end for property search. The parser accepts free-text real estate queries and converts them into structured filters that can later be used by the MySQL query layer.
+
+Example query:
+
+```txt
+Show me 3-bedroom condos in Irvine under $1.5M with a pool.
+```
+
+Example parsed output:
+
+```json
+{
+  "city": "Irvine",
+  "maxPrice": 1500000,
+  "beds": 3,
+  "baths": null,
+  "sqft": null,
+  "type": "Condominium",
+  "pool": "True",
+  "hasView": null,
+  "maxHoa": null
+}
+```
+
+### Supported Filters
+
+| User Intent | Database Column | Example |
+| --- | --- | --- |
+| City | `L_City` | `Irvine` |
+| Max price | `L_SystemPrice` | `1500000` |
+| Min bedrooms | `L_Keyword2` | `3` |
+| Min bathrooms | `LM_Dec_3` | `2.5` |
+| Min square feet | `LM_Int2_3` | `1800` |
+| Property type | `L_Type_` | `Condominium` |
+| Pool | `PoolPrivateYN` | `True` |
+| View | `ViewYN` | `True` |
+| Max HOA | `AssociationFee` | `500` |
+
+### Week 2 Deliverable
+
+An OpenClaw-ready TypeScript parser that accepts a free-text query and returns a structured filter object, validated against 12 test queries.
+
 ## Notes
 
 This repository will be updated week by week as the project expands from architecture fundamentals into live query handling, retrieval workflows, and production-style agent orchestration.

@@ -1,0 +1,9 @@
+{
+  "name": "idx-exchange-ai-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --experimental-strip-types --test tests/propertyQueryParser.test.ts"
+  }
+}
