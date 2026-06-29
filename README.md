@@ -6,6 +6,29 @@ Production-style multi-agent real estate assistant built with OpenClaw, OpenAI, 
 
 Build a multi-agent AI assistant for real estate search and market intelligence. The system will let users search active MLS listings, ask market questions, receive property recommendations, and interact through WhatsApp using an OpenClaw-based agent runtime.
 
+## Week 0 Status
+
+- OpenClaw environment installed and running
+- OpenAI API key configured
+- WhatsApp test message working
+- MySQL tables imported and verified
+
+## Database Verification
+
+The following tables were imported and cross-checked successfully:
+
+- **rets_property**: 53,122 rows
+- **california_sold**: 87,157 rows
+
+## Planned Agent Modules
+
+- Property search assistant
+- Market analytics assistant
+- Recommendation assistant
+- RAG knowledge assistant
+- Email drafting assistant
+- Human approval workflow for sensitive actions
+
 ## Week 1: Architecture Fundamentals
 
 This week focuses on understanding the OpenClaw architecture and documenting how user messages flow through the system.
@@ -74,29 +97,6 @@ export async function handleMessage(message: string) {
 ## Week 1 Deliverable
 
 Architecture documentation with a workflow diagram showing how a user query moves from WhatsApp through OpenClaw skills to the MLS databases.
-
-## Week 0 Status
-
-- OpenClaw environment installed and running
-- OpenAI API key configured
-- WhatsApp test message working
-- MySQL tables imported and verified
-
-## Database Verification
-
-The following tables were imported and cross-checked successfully:
-
-- **rets_property**: 53,122 rows
-- **california_sold**: 87,157 rows
-
-## Planned Agent Modules
-
-- Property search assistant
-- Market analytics assistant
-- Recommendation assistant
-- RAG knowledge assistant
-- Email drafting assistant
-- Human approval workflow for sensitive actions
 
 ## Week 2: Natural Language Property Search
 
