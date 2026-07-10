@@ -187,7 +187,148 @@ The tests can be run with:
 npm test
 ```
 
-Current validation status: 12 tests passing.
+Current validation status: included in the full project test suite.
+
+## Week 3: MLS Database Integration
+
+For Week 3, I added the first database integration layer for the agent. This connects the Week 2 natural language filters to safe SQL query builders for the two MLS tables:
+
+- `rets_property` for active listing search
+- `california_sold` for sold comparable property search
+
+The implementation is split across:
+
+- `src/database.ts` for the reusable MySQL connection pool
+- `src/mlsSearch.ts` for query building, search functions, pagination, and result formatting
+- `tests/mlsSearch.test.ts` for unit validation without requiring a live database connection
+
+### Active Listing Search
+
+The active listing search accepts the structured filters from Week 2 and builds a parameterized SQL query. For example, a parsed query with city, price, bedrooms, property type, and pool filters becomes a SQL query against `rets_property`.
+
+The query layer supports:
+
+- City filter using `L_City`
+- Max price using `L_SystemPrice`
+- Minimum bedrooms using `L_Keyword2`
+- Minimum bathrooms using `LM_Dec_3`
+- Minimum square feet using `LM_Int2_3`
+- Property type using `L_Type_`
+- Pool using `PoolPrivateYN`
+- View using `ViewYN`
+- HOA limit using `AssociationFee`
+- Pagination using `LIMIT` and `OFFSET`
+
+All user-provided filter values are passed as SQL parameters instead of being directly inserted into the SQL string. Pagination values are sanitized as numbers before being placed into `LIMIT` and `OFFSET`, because the local MySQL prepared statement driver rejected placeholders for pagination during the live smoke test.
+
+### Live Query Example
+
+I tested the Week 3 layer against the local MySQL database with this natural language query:
+
+```txt
+Find condos in Irvine under 1500000 with 3 beds
+```
+
+That query is parsed into filters, passed into the active listing query layer, executed against `rets_property`, and formatted into property cards.
+
+Example live results returned from the local database:
+
+```json
+[
+  {
+    "title": "44 Fallbrook",
+    "location": "Irvine, 92604",
+    "price": 735000,
+    "beds": 3,
+    "baths": "2.0",
+    "sqft": 1084,
+    "type": "Condominium",
+    "status": "Active",
+    "highlights": ["Built 1978", "47 days on market", "HOA $393", "28 photos"],
+    "agent": "Yanfeng Wu",
+    "office": "Pacific Sterling Realty"
+  }
+]
+```
+
+### Sold Comps Search
+
+I also added a sold comps query for `california_sold`. It searches recent residential closed sales by city and month window, then sorts by the most recent close date.
+
+This prepares the project for market comparison workflows such as:
+
+- "Show recent sold comps in Irvine"
+- "Compare this listing to nearby closed sales"
+- "What have similar homes sold for recently?"
+
+### Formatted Property Cards
+
+The raw database rows are converted into cleaner card-style objects for downstream agents. This gives the agent a simpler response format instead of exposing raw SQL rows directly.
+
+Example active listing card fields:
+
+```json
+{
+  "title": "10 Main Street",
+  "location": "Irvine, 92618",
+  "price": 1495000,
+  "beds": 3,
+  "baths": 2,
+  "sqft": 1800,
+  "highlights": ["4 days on market", "Private pool", "14 photos"]
+}
+```
+
+### Week 3 Validation
+
+I added automated tests for:
+
+- Parameterized active listing SQL
+- Pagination logic
+- SQL safety for potentially unsafe city text
+- Empty or unsupported filter objects
+- Pool, view, square footage, and HOA filters
+- Sold comps SQL construction
+- Invalid sold comp month defaults
+- Active listing card formatting
+- Missing optional listing fields
+- Sold comp card formatting
+- Full flow from natural language query to formatted property cards using an injected test executor
+
+I also ran a live smoke test against the local MySQL database and confirmed that real active listing rows return as formatted property cards.
+
+Current validation status: 23 tests passing.
+
+### Run Locally
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the test suite:
+
+```bash
+npm test
+```
+
+Run a live database smoke test:
+
+```bash
+node --experimental-strip-types --input-type=module -e '
+import { parsePropertyQuery } from "./src/propertyQueryParser.ts";
+import { searchActiveListings, formatListingCard } from "./src/mlsSearch.ts";
+import { closeDatabase } from "./src/database.ts";
+
+const filters = await parsePropertyQuery("Find condos in Irvine under 1500000 with 3 beds");
+const rows = await searchActiveListings(filters, { page: 1, limit: 3 });
+
+console.log(JSON.stringify(rows.map(formatListingCard), null, 2));
+
+await closeDatabase();
+'
+```
 
 ## Notes
 

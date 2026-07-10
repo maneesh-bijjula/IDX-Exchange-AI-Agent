@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --experimental-strip-types --test tests/propertyQueryParser.test.ts"
+    "test": "node --experimental-strip-types --test tests/*.test.ts"
+  },
+  "dependencies": {
+    "mysql2": "^3.11.5"
   }
 }
