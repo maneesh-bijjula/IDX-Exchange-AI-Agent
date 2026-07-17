@@ -309,6 +309,8 @@ The implementation is split across:
 
 - `src/userSession.ts` for structured per-user search state
 - `src/conversationalPropertyAgent.ts` for the multi-turn conversation controller
+- `src/liveWhatsappBridge.ts` for the local HTTP bridge used by the live WhatsApp/OpenClaw demo
+- `openclaw-skill/SKILL.md` for the OpenClaw skill instructions that route property-search messages to the local bridge
 - `tests/conversationalPropertyAgent.test.ts` for session, refinement, reset, and search-flow validation
 
 ### Why Structured Session State Exists
@@ -401,6 +403,40 @@ I added automated tests for:
 - Returning a helpful message when no listings match
 
 Current validation status: 30 tests passing.
+
+### Live WhatsApp Demo Bridge
+
+To test the Week 4 flow from WhatsApp, run the local bridge before messaging the OpenClaw agent:
+
+```bash
+npm run week4:bridge
+```
+
+The bridge stays running at:
+
+```txt
+http://127.0.0.1:3124/message
+```
+
+OpenClaw can call this endpoint through the `idx-property-search` skill. The bridge keeps the structured `UserSession` map alive while the process is running, so multi-turn messages can build on each other.
+
+Example local bridge request:
+
+```bash
+curl -s http://127.0.0.1:3124/message \
+  -H 'Content-Type: application/json' \
+  -d '{"userId":"whatsapp-demo-user","message":"Find homes in Irvine"}'
+```
+
+Then continue with:
+
+```bash
+curl -s http://127.0.0.1:3124/message \
+  -H 'Content-Type: application/json' \
+  -d '{"userId":"whatsapp-demo-user","message":"Under $1.2M"}'
+```
+
+The same session will remember the city from the first turn and merge the budget from the second turn.
 
 ### Run Locally
 
