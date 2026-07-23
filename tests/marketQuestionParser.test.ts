@@ -29,6 +29,15 @@ test("parses trend time windows", () => {
   });
 });
 
+test("parses command-style city before metric words", () => {
+  assert.deepEqual(parseMarketQuestion("Show Irvine median price and days on market over the last 12 months"), {
+    city: "Irvine",
+    zip: null,
+    months: 12,
+    metric: "days_on_market",
+  });
+});
+
 test("parses ZIP inventory questions", () => {
   assert.deepEqual(parseMarketQuestion("Inventory in 92618 over the last 6 months"), {
     city: null,

@@ -19,6 +19,9 @@ const MAX_MONTHS = 60;
 const CITY_PATTERN =
   /\b(?:in|for|around|near)\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,3})(?=\s+(?:over|during|for|last|past|this|market|price|prices|average|avg|median|dom|days|inventory|sales|sold|trend|trends|sqft|square|zip|under|above)\b|[,.!?]|$)/i;
 
+const COMMAND_CITY_PATTERN =
+  /\b(?:show|analyze|analyse|compare|summarize|summarise)\s+(?:me\s+)?(?:the\s+)?([A-Z][A-Za-z]+)(?=\s+(?:market|median|average|avg|price|prices|dom|days|inventory|sales|sold|trend|trends|sqft|square|stats|statistics|summary)\b|[,.!?]|$)/i;
+
 function toTitleCase(value: string): string {
   return value
     .trim()
@@ -60,7 +63,7 @@ function parseMetric(question: string): MarketMetric {
 }
 
 export function parseMarketQuestion(question: string): ParsedMarketQuestion {
-  const cityMatch = question.match(CITY_PATTERN);
+  const cityMatch = question.match(CITY_PATTERN) ?? question.match(COMMAND_CITY_PATTERN);
   const zipMatch = question.match(/\b(?:zip|postal code)?\s*(9\d{4})\b/i);
 
   return {
