@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "node --experimental-strip-types --test tests/*.test.ts",
-    "week4:bridge": "node --experimental-strip-types src/liveWhatsappBridge.ts"
+    "week4:bridge": "node --experimental-strip-types src/liveWhatsappBridge.ts",
+    "week5:market": "node --experimental-strip-types src/marketStatisticsCli.ts"
   },
   "dependencies": {
     "mysql2": "^3.11.5"

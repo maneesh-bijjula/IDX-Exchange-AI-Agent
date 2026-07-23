@@ -513,6 +513,103 @@ await closeDatabase();
 '
 ```
 
+## Week 5: Market Statistics Agent
+
+For Week 5, I added a market analytics engine powered by the historical `california_sold` table and current active inventory from `rets_property`. This lets the agent answer market questions such as:
+
+- `Is now a good time to buy in San Diego?`
+- `What is the average price per sq ft in Pasadena?`
+- `Show Irvine median price and days on market over the last 12 months`
+- `Compare active inventory vs sold volume in Newport Beach`
+
+The implementation is split across:
+
+- `src/marketQuestionParser.ts` for extracting city, ZIP, time window, and metric intent from natural language
+- `src/marketAnalytics.ts` for parameterized SQL, median/average calculations, monthly trend points, and inventory comparison
+- `src/marketStatisticsAgent.ts` for turning market analytics into a user-facing answer
+- `src/marketStatisticsCli.ts` for local smoke tests and OpenClaw skill execution
+- `openclaw-skill/MARKET_STATS_SKILL.md` for the Week 5 OpenClaw skill instructions
+- `tests/marketAnalytics.test.ts` and `tests/marketQuestionParser.test.ts` for deterministic validation
+
+### Core Metrics
+
+The Week 5 agent currently calculates:
+
+- Closed sale count for a city or ZIP
+- Average and median close price
+- Average price per square foot
+- Average days on market
+- List-to-close price ratio
+- Active listing count vs. sold volume
+- Months of supply
+- Month-over-month average price trend
+- Year-over-year average price trend when at least 13 monthly buckets are available
+
+### Example Market SQL
+
+The analytics engine uses parameterized queries against `california_sold`:
+
+```sql
+SELECT
+  City,
+  PostalCode,
+  CloseDate,
+  ClosePrice,
+  ListPrice,
+  LivingArea,
+  DaysOnMarket,
+  PropertyType,
+  PropertySubType
+FROM california_sold
+WHERE PropertyType = ?
+  AND CloseDate >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+  AND ClosePrice IS NOT NULL
+  AND City = ?
+ORDER BY CloseDate ASC
+```
+
+Active inventory is pulled separately from `rets_property`:
+
+```sql
+SELECT COUNT(*) AS activeCount
+FROM rets_property
+WHERE L_Status = ?
+  AND L_City = ?
+```
+
+Keeping sold-market analytics and active inventory as separate queries makes the source of each metric explicit.
+
+### Run Week 5 Locally
+
+Run the full test suite:
+
+```bash
+npm test
+```
+
+Ask a live market question against the local MySQL database:
+
+```bash
+npm run week5:market -- "What is the average price per sq ft in Pasadena?"
+```
+
+Example live result from the local database:
+
+```txt
+Market snapshot for Pasadena over the last 12 months:
+- Closed sales: 498
+- Median close price: $1,277,500
+- Average close price: $1,539,977
+- Average price per sqft: $823.15
+- Average days on market: 39.6 days
+- List-to-close ratio: 103%
+- Active vs sold inventory: 277 active / 498 sold (6.7 months of supply)
+- Latest month-over-month average price trend: up 10.2%
+- Year-over-year average price trend: not enough data
+```
+
+Current validation status: 40 automated tests passing, plus live MySQL smoke tests for Pasadena and San Diego market questions.
+
 ## Notes
 
 This repository will be updated week by week as the project expands from architecture fundamentals into live query handling, retrieval workflows, and production-style agent orchestration.
