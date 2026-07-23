@@ -438,6 +438,50 @@ curl -s http://127.0.0.1:3124/message \
 
 The same session will remember the city from the first turn and merge the budget from the second turn.
 
+For live WhatsApp testing, make sure OpenClaw is routing this direct chat to the bridge instead of the default coding assistant. The OpenClaw config should allow `exec`/`process`, keep WhatsApp in `selfChatMode`, and set the direct chat prompt for both the E.164-style peer id and the normalized id:
+
+```json
+"tools": {
+  "profile": "minimal",
+  "alsoAllow": ["exec", "process"],
+  "exec": {
+    "timeoutSec": 60
+  }
+},
+"channels": {
+  "whatsapp": {
+    "enabled": true,
+    "selfChatMode": true,
+    "dmPolicy": "allowlist",
+    "allowFrom": ["18582411191"],
+    "direct": {
+      "+18582411191": {
+        "systemPrompt": "Call the local IDX bridge for every property-search message and reply with only the returned JSON message field."
+      },
+      "18582411191": {
+        "systemPrompt": "Call the local IDX bridge for every property-search message and reply with only the returned JSON message field."
+      },
+      "*": {
+        "systemPrompt": "Call the local IDX bridge for every property-search message and reply with only the returned JSON message field."
+      }
+    }
+  }
+}
+```
+
+The wildcard direct prompt is a fallback for live demos where the WhatsApp peer id is normalized differently than expected. A healthy live test should produce this sequence:
+
+```txt
+User: Find homes in Irvine
+Agent: Got it — looking in Irvine. What is your max budget?
+
+User: Under $1.2M
+Agent: How many bedrooms do you need?
+
+User: 3 beds
+Agent: I found 2 active listings for Irvine, SingleFamilyResidence, under $1,200,000, 3+ beds:
+```
+
 ### Run Locally
 
 Install dependencies:
