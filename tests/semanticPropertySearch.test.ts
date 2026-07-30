@@ -71,7 +71,7 @@ function semanticIndex(
   };
 }
 
-test("builds parameterized active listing SQL with remarks and optional city", () => {
+test("builds parameterized active listing SQL with remarks and a city filter", () => {
   const { sql, params } = buildSemanticListingRowsQuery({
     limit: 250,
     city: "Pasadena",

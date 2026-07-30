@@ -291,7 +291,7 @@ I added automated tests for:
 - Sold comps SQL construction
 - Invalid sold comp month defaults
 - Active listing card formatting
-- Missing optional listing fields
+- Missing listing fields
 - Sold comp card formatting
 - Full flow from natural language query to formatted property cards using an injected test executor
 
@@ -694,9 +694,9 @@ The response contains the top five active listings, their semantic similarity sc
 
 Current validation status after Week 6: 53 automated tests passing, plus a live OpenAI smoke test that embedded 1,000 active listings and returned five semantically relevant mountain-property matches.
 
-## Optional Enrichment: Unified School District Mapping
+## Unified School District Mapping
 
-The project also includes Aiden's optional school-district enrichment. It uses the authoritative California School District Areas 2025-26 GeoJSON, filters the boundaries to `DistrictType = "Unified"`, converts each active listing's latitude and longitude to a geographic point, and performs a point-in-polygon spatial join with GeoPandas.
+The project includes school-district enrichment using the authoritative California School District Areas 2025-26 GeoJSON. It filters the boundaries to `DistrictType = "Unified"`, converts each active listing's latitude and longitude to a geographic point, and performs a point-in-polygon spatial join with GeoPandas.
 
 The implementation is additive, so it does not alter the imported `rets_property` table or risk the working search flows:
 

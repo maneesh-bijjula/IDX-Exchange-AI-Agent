@@ -152,7 +152,7 @@ test("formats active listing rows into property cards", () => {
   });
 });
 
-test("formats listing cards with missing optional fields", () => {
+test("formats listing cards with missing fields", () => {
   const row: ListingRow = {
     L_ListingID: null,
     L_DisplayId: "DISPLAY-1",
