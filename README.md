@@ -645,14 +645,20 @@ The generated index is runtime data and is ignored by Git. Rebuild it whenever t
 
 ### Week 6 Configuration
 
-Export these environment variables in the terminal:
+Create a private `.env` file from the included template:
 
 ```bash
-export OPENAI_API_KEY="your-openai-api-key"
-export OPENAI_EMBEDDING_MODEL="text-embedding-3-small"
+cp .env.example .env
 ```
 
-The MySQL and Week 6 environment variable names are also documented in `.env.example`. The current npm commands read process environment variables and do not automatically load a `.env` file.
+Add the OpenAI key to `.env`:
+
+```env
+OPENAI_API_KEY=your-openai-api-key
+OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+```
+
+The Week 6 npm commands automatically load this file when it exists. `.env` is ignored by Git and must never be committed.
 
 ### Build the Listing Index
 
@@ -686,7 +692,7 @@ npm run week6:search -- "charming craftsman with mountain views and character"
 
 The response contains the top five active listings, their semantic similarity scores, core property facts, and a short listing-description preview.
 
-Current validation status after Week 6: 53 automated tests passing, including OpenAI client mocking, parameterized listing SQL, text construction, batched index generation, index persistence, cosine similarity, ranking, and response formatting.
+Current validation status after Week 6: 53 automated tests passing, plus a live OpenAI smoke test that embedded 1,000 active listings and returned five semantically relevant mountain-property matches.
 
 ## Notes
 
