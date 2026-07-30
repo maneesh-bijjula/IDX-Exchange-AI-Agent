@@ -8,7 +8,9 @@
     "week4:bridge": "node --experimental-strip-types src/liveWhatsappBridge.ts",
     "week5:market": "node --experimental-strip-types src/marketStatisticsCli.ts",
     "week6:index": "node --env-file-if-exists=.env --experimental-strip-types src/semanticIndexCli.ts",
-    "week6:search": "node --env-file-if-exists=.env --experimental-strip-types src/semanticPropertyCli.ts"
+    "week6:search": "node --env-file-if-exists=.env --experimental-strip-types src/semanticPropertyCli.ts",
+    "school-districts:enrich": ".venv-school-districts/bin/python scripts/enrich_school_districts.py",
+    "school-districts:test": ".venv-school-districts/bin/python -m unittest tests/test_school_district_enrichment.py"
   },
   "dependencies": {
     "mysql2": "^3.11.5",

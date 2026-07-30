@@ -694,6 +694,53 @@ The response contains the top five active listings, their semantic similarity sc
 
 Current validation status after Week 6: 53 automated tests passing, plus a live OpenAI smoke test that embedded 1,000 active listings and returned five semantically relevant mountain-property matches.
 
+## Optional Enrichment: Unified School District Mapping
+
+The project also includes Aiden's optional school-district enrichment. It uses the authoritative California School District Areas 2025-26 GeoJSON, filters the boundaries to `DistrictType = "Unified"`, converts each active listing's latitude and longitude to a geographic point, and performs a point-in-polygon spatial join with GeoPandas.
+
+The implementation is additive, so it does not alter the imported `rets_property` table or risk the working search flows:
+
+- `scripts/enrich_school_districts.py` downloads and processes the boundary data
+- `property_school_district` stores one mapping row per listing in MySQL
+- `data/school-districts/property-school-district-mapping.csv` is the saved enriched dataset
+- `src/schoolDistrict.ts` provides a parameterized lookup for future agents
+- `tests/test_school_district_enrichment.py` validates unified filtering and spatial mapping
+
+### Set Up GeoPandas
+
+Create a dedicated Python 3.12 environment and install the GIS dependencies:
+
+```bash
+/opt/homebrew/bin/python3.12 -m venv .venv-school-districts
+.venv-school-districts/bin/python -m pip install -r requirements-school-districts.txt
+```
+
+### Run the Enrichment
+
+Run a 1,000-listing smoke test:
+
+```bash
+npm run school-districts:enrich -- --limit 1000
+```
+
+Run all geocoded active listings:
+
+```bash
+npm run school-districts:enrich
+```
+
+The script downloads the official GeoJSON automatically if it is missing, saves the CSV mapping, creates `property_school_district` when needed, and safely upserts the results in batches. Both the downloaded boundaries and generated CSV are ignored by Git because they are reproducible runtime data.
+
+Run the spatial-enrichment tests with:
+
+```bash
+npm run school-districts:test
+```
+
+Only unified districts are included, as requested. Properties served by separate elementary and high-school districts therefore remain explicitly unmatched rather than receiving an incorrect district assignment.
+
+Current validation status: 57 Node tests and 3 GIS enrichment tests passing. The full local run processed 52,424 geocoded active listings and matched 40,984 of them to unified districts (78.2% coverage).
+
 ## Notes
 
 This repository will be updated week by week as the project expands from architecture fundamentals into live query handling, retrieval workflows, and production-style agent orchestration.
