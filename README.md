@@ -608,7 +608,85 @@ Market snapshot for Pasadena over the last 12 months:
 - Year-over-year average price trend: not enough data
 ```
 
-Current validation status: 40 automated tests passing, plus live MySQL smoke tests for Pasadena and San Diego market questions.
+Current validation status after Week 5: 41 automated tests passing, plus live MySQL smoke tests for Pasadena, San Diego, and Irvine market questions.
+
+## Week 6: Embeddings and Vector Search
+
+Week 6 adds semantic property search on top of the active `rets_property` inventory. Instead of requiring exact keyword overlap, the agent can understand free-text descriptions such as:
+
+- `Find a charming craftsman with mountain views and character`
+- `I want a peaceful modern home surrounded by nature`
+- `Show me a bright coastal property with an open layout`
+- `Find a historic home with original details and a large garden`
+
+The implementation uses the OpenAI `text-embedding-3-small` model by default. It turns each active listing into a rich text document containing the property type, city, ZIP, beds, baths, square footage, year built, price, and `L_Remarks`. The same model embeds the user's query, and cosine similarity ranks the five closest listing vectors.
+
+The Week 6 implementation is split across:
+
+- `src/embeddings.ts` for normalized, batched OpenAI embedding requests
+- `src/semanticPropertySearch.ts` for active-listing SQL, index creation, index persistence, cosine similarity, and ranking
+- `src/semanticPropertyAgent.ts` for formatting the top five matches
+- `src/semanticIndexCli.ts` for building or refreshing the local vector index
+- `src/semanticPropertyCli.ts` for direct semantic-search smoke tests and OpenClaw execution
+- `openclaw-skill/SEMANTIC_PROPERTY_SKILL.md` for the Week 6 OpenClaw skill instructions
+- `tests/embeddings.test.ts` and `tests/semanticPropertySearch.test.ts` for deterministic validation
+
+### How the Semantic Index Works
+
+Generating a vector for every listing on every search would be slow and waste API credits. Week 6 therefore uses a reusable local index:
+
+1. Query active listings with non-empty `L_Remarks` from MySQL.
+2. Build one searchable text document per listing.
+3. Generate embeddings in batches of 50.
+4. Save listing metadata and vectors to `data/semantic-listing-index.json`.
+5. Embed each new user query once and rank the saved vectors with cosine similarity.
+
+The generated index is runtime data and is ignored by Git. Rebuild it whenever the active listing data changes significantly.
+
+### Week 6 Configuration
+
+Export these environment variables in the terminal:
+
+```bash
+export OPENAI_API_KEY="your-openai-api-key"
+export OPENAI_EMBEDDING_MODEL="text-embedding-3-small"
+```
+
+The MySQL and Week 6 environment variable names are also documented in `.env.example`. The current npm commands read process environment variables and do not automatically load a `.env` file.
+
+### Build the Listing Index
+
+Build a 1,000-listing development index:
+
+```bash
+npm run week6:index -- --limit 1000
+```
+
+Build a smaller city-specific index for quick testing:
+
+```bash
+npm run week6:index -- --limit 250 --city Pasadena
+```
+
+Build embeddings for every active listing that has remarks:
+
+```bash
+npm run week6:index -- --all
+```
+
+The default batch size is 50. It can be changed with `--batch-size`, but the implementation caps batches at 100.
+
+### Run Semantic Search
+
+After the index exists, run:
+
+```bash
+npm run week6:search -- "charming craftsman with mountain views and character"
+```
+
+The response contains the top five active listings, their semantic similarity scores, core property facts, and a short listing-description preview.
+
+Current validation status after Week 6: 53 automated tests passing, including OpenAI client mocking, parameterized listing SQL, text construction, batched index generation, index persistence, cosine similarity, ranking, and response formatting.
 
 ## Notes
 
