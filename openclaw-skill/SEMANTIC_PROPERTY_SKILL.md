@@ -19,7 +19,9 @@ Run this from the IDX Exchange AI Agent repo:
 npm run week6:search -- "EXACT_USER_MESSAGE"
 ```
 
-Reply with the command output only. The search embeds the user's description with the same OpenAI embedding model used to build the local listing index, calculates cosine similarity against active `rets_property` listings, and returns the five highest-scoring matches.
+Reply with the command output only. Copy stdout beginning with `Top` verbatim. Do not summarize, rewrite, reorder, shorten, or add an introduction or closing sentence. Preserve every `School district:` line exactly; a semantic-search reply is incomplete if any property is missing that line.
+
+The search embeds the user's description with the same OpenAI embedding model used to build the local listing index, calculates cosine similarity against active `rets_property` listings, and returns the five highest-scoring matches with unified school-district data.
 
 Use this skill for requests such as:
 
