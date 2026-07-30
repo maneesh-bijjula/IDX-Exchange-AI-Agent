@@ -1,4 +1,5 @@
 import { answerSemanticPropertyQuery } from "./semanticPropertyAgent.ts";
+import { closeDatabase } from "./database.ts";
 
 const query = process.argv.slice(2).join(" ").trim();
 
@@ -15,4 +16,6 @@ try {
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));
   process.exitCode = 1;
+} finally {
+  await closeDatabase();
 }

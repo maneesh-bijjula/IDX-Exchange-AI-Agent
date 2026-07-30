@@ -692,6 +692,8 @@ npm run week6:search -- "charming craftsman with mountain views and character"
 
 The response contains the top five active listings, their semantic similarity scores, core property facts, and a short listing-description preview.
 
+When the school-district enrichment has been run, the same CLI and WhatsApp semantic-search responses also show each matched unified school district and county. Listings outside unified-district coverage are labeled as unavailable.
+
 Current validation status after Week 6: 53 automated tests passing, plus a live OpenAI smoke test that embedded 1,000 active listings and returned five semantically relevant mountain-property matches.
 
 ## Unified School District Mapping

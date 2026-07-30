@@ -210,6 +210,17 @@ test("formats five semantic results as readable property matches", () => {
       address: `${index + 1} Character Lane`,
     }),
     score: 1 - index * 0.05,
+    schoolDistrict:
+      index === 0
+        ? {
+            listingId: "listing-1",
+            districtName: "Example Unified",
+            districtType: "Unified" as const,
+            districtCdsCode: "123",
+            countyName: "Example",
+            boundaryYear: "2025-26",
+          }
+        : null,
   }));
 
   const message = formatSemanticSearchResults(
@@ -221,4 +232,6 @@ test("formats five semantic results as readable property matches", () => {
   assert.match(message, /1\. 1 Character Lane/);
   assert.match(message, /5\. 5 Character Lane/);
   assert.match(message, /100\.0% semantic match/);
+  assert.match(message, /School district: Example Unified, Example County/);
+  assert.match(message, /School district: Unified district unavailable/);
 });

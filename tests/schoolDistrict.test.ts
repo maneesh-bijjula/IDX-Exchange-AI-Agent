@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildSchoolDistrictBatchLookupQuery,
   buildSchoolDistrictLookupQuery,
+  getSchoolDistrictsForListings,
   getSchoolDistrictForListing,
   type SchoolDistrictMapping,
 } from "../src/schoolDistrict.ts";
@@ -50,4 +52,32 @@ test("returns null when a property is outside unified-district coverage", async 
     await getSchoolDistrictForListing("OUTSIDE", executor),
     null,
   );
+});
+
+test("builds one parameterized query for multiple listing ids", async () => {
+  const built = buildSchoolDistrictBatchLookupQuery([
+    " ONE ",
+    "TWO",
+    "ONE",
+  ]);
+
+  assert.match(built.sql, /listing_id IN \(\?, \?\)/);
+  assert.deepEqual(built.params, ["ONE", "TWO"]);
+
+  const expected: SchoolDistrictMapping = {
+    listingId: "ONE",
+    districtName: "Irvine Unified",
+    districtType: "Unified",
+    districtCdsCode: "30736500000000",
+    countyName: "Orange",
+    boundaryYear: "2025-26",
+  };
+  const executor = async <T>() => [expected as T];
+  const mappings = await getSchoolDistrictsForListings(
+    ["ONE", "TWO"],
+    executor,
+  );
+
+  assert.deepEqual(mappings.get("ONE"), expected);
+  assert.equal(mappings.has("TWO"), false);
 });
