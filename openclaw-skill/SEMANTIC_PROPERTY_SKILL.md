@@ -5,6 +5,8 @@ description: Find active California listings that are semantically similar to a 
 
 Use this skill when the user describes a property's style, atmosphere, setting, features, or character instead of providing only structured filters.
 
+This semantic route takes priority over the Week 4 structured property-search bridge whenever the request contains qualitative preferences such as `charming`, `craftsman`, `mountain views`, `character`, `peaceful`, `modern`, `coastal`, `historic`, or similar descriptive language. Do not send those requests to the Week 4 bridge, even when they begin with `find`, `show`, or `I want`.
+
 The Week 6 semantic property agent is implemented in:
 
 ```txt
