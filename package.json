@@ -9,6 +9,7 @@
     "week5:market": "node --experimental-strip-types src/marketStatisticsCli.ts",
     "week6:index": "node --env-file-if-exists=.env --experimental-strip-types src/semanticIndexCli.ts",
     "week6:search": "node --env-file-if-exists=.env --experimental-strip-types src/semanticPropertyCli.ts",
+    "week7:recommend": "node --env-file-if-exists=.env --experimental-strip-types src/recommendationCli.ts",
     "school-districts:enrich": ".venv-school-districts/bin/python scripts/enrich_school_districts.py",
     "school-districts:test": ".venv-school-districts/bin/python -m unittest tests/test_school_district_enrichment.py"
   },

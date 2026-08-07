@@ -741,7 +741,49 @@ npm run school-districts:test
 
 Only unified districts are included, as requested. Properties served by separate elementary and high-school districts therefore remain explicitly unmatched rather than receiving an incorrect district assignment.
 
-Current validation status: 57 Node tests and 3 GIS enrichment tests passing. The full local run processed 52,424 geocoded active listings and matched 40,984 of them to unified districts (78.2% coverage).
+Current validation status: 67 Node tests and 3 GIS enrichment tests passing. The full local run processed 52,424 geocoded active listings and matched 40,984 of them to unified districts (78.2% coverage).
+
+## Week 7: Hybrid Recommendation Engine
+
+Week 7 recommends active properties from a listing the user already likes. It reuses the Week 6 semantic index, combines structured property similarity with embedding cosine similarity, and validates each final recommendation against recent `california_sold` pricing data.
+
+The implementation is split across:
+
+- `src/recommendationEngine.ts` for target lookup, hybrid scoring, ranking, and comp validation
+- `src/recommendationAgent.ts` for data-backed recommendation formatting
+- `src/recommendationCli.ts` for local and OpenClaw execution
+- `openclaw-skill/RECOMMENDATION_SKILL.md` for WhatsApp routing
+- `tests/recommendationEngine.test.ts` for deterministic scoring and query validation
+
+### Hybrid Score
+
+Each candidate can receive up to 100 points:
+
+- Up to 20 points for price proximity
+- 15 points for the same bedroom count
+- 15 points for the same city
+- Up to 10 points for square-footage proximity
+- Up to 40 points from embedding cosine similarity
+
+The first four components make up the 60-point structured score from the handbook. The semantic component contributes the remaining 40 points. The target listing is excluded before candidates are sorted, and the five highest total scores are returned.
+
+### Sold-Comp Validation
+
+The final five recommendations are checked against residential sales from the last six months in `california_sold`. Comparable rows must be in the same city and within 80% to 120% of the recommendation's living area.
+
+For efficiency, all five city and square-footage bands are retrieved through one parameterized SQL query. The engine then calculates average sold price per square foot, estimated comp-supported price, comp count, and the listing's percentage above or below that estimate.
+
+### Run Week 7 Locally
+
+The Week 6 semantic index must already exist. Recommend from an indexed street address with:
+
+```bash
+npm run week7:recommend -- "Recommend homes like 33348 Robin Drive"
+```
+
+The CLI also accepts an indexed listing ID or display ID. A live validation for `33348 Robin Drive` returned five ranked active recommendations with hybrid-score breakdowns and sold-comp assessments in under one second.
+
+Current validation status after Week 7: 67 automated Node tests passing, plus a live recommendation and MySQL comp-validation smoke test.
 
 ## Notes
 
