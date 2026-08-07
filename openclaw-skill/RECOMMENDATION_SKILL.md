@@ -13,7 +13,7 @@ Run this from the IDX Exchange AI Agent repo:
 npm run week7:recommend -- "EXACT_USER_MESSAGE"
 ```
 
-Reply with stdout beginning with `Top` only. Preserve every recommendation and every `Hybrid score:`, `Why it matches:`, `Comp validation:`, and `Comp confidence:` line. Keep the informational-estimate disclaimer. Do not invent recommendations or pricing data.
+Reply with stdout beginning with `Top` only. Preserve every recommendation and every `Hybrid score:`, `Why it matches:`, and `Market evidence:` line exactly. Each available `Market evidence:` line must retain its price estimate, recent-sale count, above/below assessment, and confidence. Keep the informational-estimate disclaimer. Do not invent recommendations or pricing data.
 
 Use this skill for requests such as:
 

@@ -216,8 +216,8 @@ test("formats five recommendations with scores and comp evidence", () => {
   assert.match(message, /Top 5 recommendations similar to 10 Canyon Road/);
   assert.match(message, /Hybrid score: 100\/100/);
   assert.match(message, /Why it matches: \$0 price difference; same bedroom count; same city/);
-  assert.match(message, /Comp validation: \$900,000 estimate from 12 recent sales/);
-  assert.match(message, /Comp confidence: medium \(12 recent sales\)/);
+  assert.match(message, /Market evidence: \$900,000 estimate from 12 recent sales/);
+  assert.match(message, /11.1% above recent comps; medium confidence/);
   assert.match(message, /informational estimates, not appraisals/);
   assert.match(message, /5\. 5 Similar Lane/);
 });

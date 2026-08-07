@@ -8,11 +8,6 @@ function money(value: number | null): string {
   return value == null ? "unavailable" : `$${value.toLocaleString("en-US")}`;
 }
 
-function preview(text: string, maxLength = 180): string {
-  if (text.length <= maxLength) return text;
-  return `${text.slice(0, maxLength - 3).trimEnd()}...`;
-}
-
 function matchReasons(
   target: RecommendationResponse["target"],
   result: RecommendationResponse["recommendations"][number],
@@ -64,19 +59,17 @@ export function formatRecommendationResponse(
         : `${listing.baths} ${listing.baths === 1 ? "bath" : "baths"}`,
       listing.sqft == null ? null : `${listing.sqft.toLocaleString("en-US")} sqft`,
     ].filter((value): value is string => value != null);
-    const compDetails =
+    const marketEvidence =
       compValidation.estimatedCompPrice == null
-        ? compValidation.assessment
-        : `${money(compValidation.estimatedCompPrice)} estimate from ${compValidation.compCount.toLocaleString("en-US")} recent sales; ${compValidation.assessment.toLocaleLowerCase()}`;
+        ? `${compValidation.assessment}; confidence unavailable`
+        : `${money(compValidation.estimatedCompPrice)} estimate from ${compValidation.compCount.toLocaleString("en-US")} recent sales; ${compValidation.assessment.toLocaleLowerCase()}; ${compValidation.confidence} confidence`;
 
     return [
       `${index + 1}. ${listing.address ?? "Address unavailable"}${location ? ` - ${location}` : ""} - ${money(listing.price)}`,
       `   ${details.join(" | ")}`,
       `   Hybrid score: ${score.totalScore}/100 (structured ${score.structuredScore}/60 + semantic ${score.semanticScore}/40)`,
       `   Why it matches: ${matchReasons(response.target, result)}`,
-      `   Comp validation: ${compDetails}`,
-      `   Comp confidence: ${compValidation.confidence} (${compValidation.compCount.toLocaleString("en-US")} recent sales)`,
-      `   ${preview(listing.remarks)}`,
+      `   Market evidence: ${marketEvidence}`,
     ].join("\n");
   });
 
