@@ -310,7 +310,7 @@ The implementation is split across:
 - `src/userSession.ts` for structured per-user search state
 - `src/conversationalPropertyAgent.ts` for the multi-turn conversation controller
 - `src/liveWhatsappBridge.ts` for the local HTTP bridge used by the live WhatsApp/OpenClaw demo
-- `openclaw-skill/SKILL.md` for the OpenClaw skill instructions that route property-search messages to the local bridge
+- `openclaw-skills/SKILL.md` for the OpenClaw skill instructions that route property-search messages to the local bridge
 - `tests/conversationalPropertyAgent.test.ts` for session, refinement, reset, and search-flow validation
 
 ### Why Structured Session State Exists
@@ -528,7 +528,7 @@ The implementation is split across:
 - `src/marketAnalytics.ts` for parameterized SQL, median/average calculations, monthly trend points, and inventory comparison
 - `src/marketStatisticsAgent.ts` for turning market analytics into a user-facing answer
 - `src/marketStatisticsCli.ts` for local smoke tests and OpenClaw skill execution
-- `openclaw-skill/MARKET_STATS_SKILL.md` for the Week 5 OpenClaw skill instructions
+- `openclaw-skills/MARKET_STATS_SKILL.md` for the Week 5 OpenClaw skill instructions
 - `tests/marketAnalytics.test.ts` and `tests/marketQuestionParser.test.ts` for deterministic validation
 
 ### Core Metrics
@@ -628,7 +628,7 @@ The Week 6 implementation is split across:
 - `src/semanticPropertyAgent.ts` for formatting the top five matches
 - `src/semanticIndexCli.ts` for building or refreshing the local vector index
 - `src/semanticPropertyCli.ts` for direct semantic-search smoke tests and OpenClaw execution
-- `openclaw-skill/SEMANTIC_PROPERTY_SKILL.md` for the Week 6 OpenClaw skill instructions
+- `openclaw-skills/SEMANTIC_PROPERTY_SKILL.md` for the Week 6 OpenClaw skill instructions
 - `tests/embeddings.test.ts` and `tests/semanticPropertySearch.test.ts` for deterministic validation
 
 ### How the Semantic Index Works
@@ -752,7 +752,7 @@ The implementation is split across:
 - `src/recommendationEngine.ts` for target lookup, hybrid scoring, ranking, and comp validation
 - `src/recommendationAgent.ts` for data-backed recommendation formatting
 - `src/recommendationCli.ts` for local and OpenClaw execution
-- `openclaw-skill/RECOMMENDATION_SKILL.md` for WhatsApp routing
+- `openclaw-skills/RECOMMENDATION_SKILL.md` for WhatsApp routing
 - `tests/recommendationEngine.test.ts` for deterministic scoring and query validation
 
 ### Hybrid Score
