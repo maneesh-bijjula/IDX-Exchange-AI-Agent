@@ -171,7 +171,9 @@ test("creates above, below, and unavailable comp assessments", () => {
   assert.equal(above.estimatedCompPrice, 900_000);
   assert.equal(above.deltaPct, 11.1);
   assert.equal(above.assessment, "11.1% above recent comps");
+  assert.equal(above.confidence, "medium");
   assert.equal(below.assessment, "11.1% below recent comps");
+  assert.equal(unavailable.confidence, "unavailable");
   assert.equal(unavailable.assessment, "Not enough recent sold-comp data");
 });
 
@@ -213,6 +215,9 @@ test("formats five recommendations with scores and comp evidence", () => {
   const message = formatRecommendationResponse({ target, recommendations });
   assert.match(message, /Top 5 recommendations similar to 10 Canyon Road/);
   assert.match(message, /Hybrid score: 100\/100/);
+  assert.match(message, /Why it matches: \$0 price difference; same bedroom count; same city/);
   assert.match(message, /Comp validation: \$900,000 estimate from 12 recent sales/);
+  assert.match(message, /Comp confidence: medium \(12 recent sales\)/);
+  assert.match(message, /informational estimates, not appraisals/);
   assert.match(message, /5\. 5 Similar Lane/);
 });

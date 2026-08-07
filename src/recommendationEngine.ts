@@ -20,6 +20,7 @@ export type HybridScore = {
 
 export type CompValidation = {
   compCount: number;
+  confidence: "high" | "medium" | "low" | "unavailable";
   averagePricePerSqft: number | null;
   estimatedCompPrice: number | null;
   listPrice: number | null;
@@ -265,8 +266,18 @@ export function createCompValidation(
     else assessment = `${Math.abs(deltaPct)}% below recent comps`;
   }
 
+  const confidence =
+    compCount >= 20
+      ? "high"
+      : compCount >= 5
+        ? "medium"
+        : compCount > 0
+          ? "low"
+          : "unavailable";
+
   return {
     compCount,
+    confidence,
     averagePricePerSqft:
       averagePricePerSqft == null ? null : round(averagePricePerSqft),
     estimatedCompPrice,

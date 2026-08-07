@@ -773,6 +773,8 @@ The final five recommendations are checked against residential sales from the la
 
 For efficiency, all five city and square-footage bands are retrieved through one parameterized SQL query. The engine then calculates average sold price per square foot, estimated comp-supported price, comp count, and the listing's percentage above or below that estimate.
 
+Each recommendation also explains the structured and semantic reasons behind its rank. Sold-comp evidence is labeled high confidence for at least 20 comparable sales, medium for 5 to 19, low for 1 to 4, and unavailable when no qualifying sales exist. Comp-supported prices are clearly presented as informational estimates rather than appraisals.
+
 ### Run Week 7 Locally
 
 The Week 6 semantic index must already exist. Recommend from an indexed street address with:

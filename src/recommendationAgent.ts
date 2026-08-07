@@ -13,6 +13,37 @@ function preview(text: string, maxLength = 180): string {
   return `${text.slice(0, maxLength - 3).trimEnd()}...`;
 }
 
+function matchReasons(
+  target: RecommendationResponse["target"],
+  result: RecommendationResponse["recommendations"][number],
+): string {
+  const reasons: string[] = [];
+  if (
+    result.score.pricePoints > 0 &&
+    target.price != null &&
+    result.listing.price != null
+  ) {
+    reasons.push(
+      `$${Math.abs(target.price - result.listing.price).toLocaleString("en-US")} price difference`,
+    );
+  }
+  if (result.score.bedsPoints > 0) reasons.push("same bedroom count");
+  if (result.score.cityPoints > 0) reasons.push("same city");
+  if (
+    result.score.sqftPoints > 0 &&
+    target.sqft != null &&
+    result.listing.sqft != null
+  ) {
+    reasons.push(
+      `${Math.abs(target.sqft - result.listing.sqft).toLocaleString("en-US")} sqft difference`,
+    );
+  }
+  reasons.push(
+    `${(result.score.semanticSimilarity * 100).toFixed(1)}% semantic similarity`,
+  );
+  return reasons.join("; ");
+}
+
 export function formatRecommendationResponse(
   response: RecommendationResponse,
 ): string {
@@ -42,7 +73,9 @@ export function formatRecommendationResponse(
       `${index + 1}. ${listing.address ?? "Address unavailable"}${location ? ` - ${location}` : ""} - ${money(listing.price)}`,
       `   ${details.join(" | ")}`,
       `   Hybrid score: ${score.totalScore}/100 (structured ${score.structuredScore}/60 + semantic ${score.semanticScore}/40)`,
+      `   Why it matches: ${matchReasons(response.target, result)}`,
       `   Comp validation: ${compDetails}`,
+      `   Comp confidence: ${compValidation.confidence} (${compValidation.compCount.toLocaleString("en-US")} recent sales)`,
       `   ${preview(listing.remarks)}`,
     ].join("\n");
   });
@@ -53,6 +86,8 @@ export function formatRecommendationResponse(
     ...formatted.flatMap((item, index) =>
       index === formatted.length - 1 ? [item] : [item, ""],
     ),
+    "",
+    "Comp-supported prices are informational estimates, not appraisals.",
   ].join("\n");
 }
 
