@@ -22,6 +22,12 @@ const CITY_PATTERN =
 const COMMAND_CITY_PATTERN =
   /\b(?:show|analyze|analyse|compare|summarize|summarise)\s+(?:me\s+)?(?:the\s+)?([A-Z][A-Za-z]+)(?=\s+(?:market|median|average|avg|price|prices|dom|days|inventory|sales|sold|trend|trends|sqft|square|stats|statistics|summary)\b|[,.!?]|$)/i;
 
+const MIXED_SEARCH_CITY_PATTERN =
+  /\b(?:homes?|houses?|properties|listings|condos|townhomes)\s+(?:in|near|around)\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,2}?)(?=\s+and\s+(?:tell|show|explain|analyze|analyse|compare)\b)/i;
+
+const EMAIL_MARKET_CITY_PATTERN =
+  /\b(?:summarize|summarise|summarizing|summarising|about)\s+(?:the\s+)?([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,2}?)\s+market\b/i;
+
 function toTitleCase(value: string): string {
   return value
     .trim()
@@ -63,7 +69,11 @@ function parseMetric(question: string): MarketMetric {
 }
 
 export function parseMarketQuestion(question: string): ParsedMarketQuestion {
-  const cityMatch = question.match(CITY_PATTERN) ?? question.match(COMMAND_CITY_PATTERN);
+  const cityMatch =
+    question.match(MIXED_SEARCH_CITY_PATTERN) ??
+    question.match(EMAIL_MARKET_CITY_PATTERN) ??
+    question.match(CITY_PATTERN) ??
+    question.match(COMMAND_CITY_PATTERN);
   const zipMatch = question.match(/\b(?:zip|postal code)?\s*(9\d{4})\b/i);
 
   return {

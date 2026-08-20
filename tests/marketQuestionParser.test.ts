@@ -46,3 +46,29 @@ test("parses ZIP inventory questions", () => {
     metric: "inventory",
   });
 });
+
+test("parses the city from the Week 9 mixed-intent example", () => {
+  assert.deepEqual(
+    parseMarketQuestion(
+      "Find me affordable homes in Pasadena and tell me whether prices are rising.",
+    ),
+    {
+      city: "Pasadena",
+      zip: null,
+      months: 12,
+      metric: "summary",
+    },
+  );
+});
+
+test("parses a city from an email market-summary request", () => {
+  assert.deepEqual(
+    parseMarketQuestion("Draft an email summarizing the San Diego market"),
+    {
+      city: "San Diego",
+      zip: null,
+      months: 12,
+      metric: "summary",
+    },
+  );
+});

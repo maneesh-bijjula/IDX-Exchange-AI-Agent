@@ -1,0 +1,42 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { draftEmailSummary } from "../src/emailDraftAgent.ts";
+
+test("drafts a formatted market email from agent output", async () => {
+  const draft = await draftEmailSummary({
+    query: "Draft an email about the Pasadena market",
+    sections: [
+      { title: "Market Statistics", message: "Median close price: $1,100,000" },
+    ],
+  });
+
+  assert.equal(draft.subject, "Pasadena Market Update");
+  assert.match(draft.message, /^Subject: Pasadena Market Update/);
+  assert.match(draft.message, /Median close price: \$1,100,000/);
+  assert.match(draft.message, /Best,\nIDX Exchange/);
+});
+
+test("can draft from the previous orchestrator response", async () => {
+  const draft = await draftEmailSummary({
+    query: "Email these results",
+    previousResponse: "Three active Irvine listings were found.",
+  });
+
+  assert.equal(draft.subject, "Real Estate Update");
+  assert.match(draft.message, /Three active Irvine listings were found/);
+});
+
+test("keeps the city in a summarized market email subject", async () => {
+  const draft = await draftEmailSummary({
+    query: "Draft an email summarizing the Pasadena market",
+    sections: [{ title: "Market Statistics", message: "Market data" }],
+  });
+  assert.equal(draft.subject, "Pasadena Market Update");
+});
+
+test("asks for source material when no summary exists", async () => {
+  const draft = await draftEmailSummary({ query: "Draft an email" });
+  assert.equal(draft.subject, null);
+  assert.match(draft.message, /need property results or a market summary/i);
+});

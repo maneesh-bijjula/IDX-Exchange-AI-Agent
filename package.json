@@ -12,6 +12,8 @@
     "week7:recommend": "node --env-file-if-exists=.env --experimental-strip-types src/recommendationCli.ts",
     "week8:index": "node --env-file-if-exists=.env --experimental-strip-types src/ragIndexCli.ts",
     "week8:ask": "node --env-file-if-exists=.env --experimental-strip-types src/ragCli.ts",
+    "week9:orchestrate": "node --env-file-if-exists=.env --experimental-strip-types src/orchestratorCli.ts",
+    "week9:bridge": "node --env-file-if-exists=.env --experimental-strip-types src/multiAgentBridge.ts",
     "school-districts:enrich": ".venv-school-districts/bin/python scripts/enrich_school_districts.py",
     "school-districts:test": ".venv-school-districts/bin/python -m unittest tests/test_school_district_enrichment.py"
   },

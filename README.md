@@ -860,6 +860,57 @@ The production examples mentioning separate IDX internal documentation and Calif
 
 Current validation status after Week 8: 74 automated Node tests passing. The live index contains 171 chunks from four sources, and all three handbook questions pass end-to-end with cited answers.
 
+## Week 9: Multi-Agent Orchestration
+
+Week 9 combines the specialized agents behind one coordinator. Every incoming query is classified as property search, market statistics, recommendation, grounded knowledge, email drafting, or a mixed request. The orchestrator then calls the matching registered agents and returns one response.
+
+The five-agent registry contains:
+
+- `propertySearchAgent` for structured active-listing searches and qualitative semantic searches against `rets_property`
+- `marketStatsAgent` for `california_sold` analytics and active inventory comparisons
+- `recommendationAgent` for hybrid recommendations with sold-comp validation
+- `ragAgent` for cited terminology and MLS schema answers
+- `emailDraftAgent` for formatted property and market summary drafts
+
+The implementation is split across:
+
+- `src/intentClassifier.ts` for deterministic single and mixed-intent classification
+- `src/agentRegistry.ts` for typed adapters around the Week 4–8 agents
+- `src/orchestrator.ts` for routing, parallel execution, response merging, and per-user response memory
+- `src/emailDraftAgent.ts` for formatted email drafts
+- `src/orchestratorCli.ts` for local requests
+- `src/multiAgentBridge.ts` for the persistent OpenClaw and WhatsApp entry point
+- `openclaw-skills/ORCHESTRATOR_SKILL.md` for single-entry-point routing instructions
+- `tests/intentClassifier.test.ts`, `tests/emailDraftAgent.test.ts`, and `tests/orchestrator.test.ts` for Week 9 validation
+
+Mixed specialist work runs concurrently. The handbook example routes property search and market statistics together and labels both parts of the unified response:
+
+```bash
+npm run week9:orchestrate -- "Find me affordable homes in Pasadena and tell me whether prices are rising"
+```
+
+Email requests can use data generated in the same turn or the user's previous response:
+
+```bash
+npm run week9:orchestrate -- "Draft an email summarizing the Pasadena market"
+```
+
+When a shell command contains a dollar-denominated budget, use single quotes so the shell preserves the `$` character:
+
+```bash
+npm run week9:orchestrate -- 'Find homes in Irvine under $1.2M with 3 beds'
+```
+
+For persistent multi-turn testing, start the single Week 9 bridge:
+
+```bash
+npm run week9:bridge
+```
+
+Then send requests to `http://127.0.0.1:3125/message`. The bridge keeps structured search state and the latest unified response in memory for the process lifetime.
+
+Current validation status after Week 9: 93 automated Node tests and 3 school-district enrichment tests passing. Live smoke tests cover all five registered agents, qualitative semantic search, the handbook's mixed Pasadena query, and persistent multi-turn bridge follow-ups.
+
 ## Notes
 
 This repository will be updated week by week as the project expands from architecture fundamentals into live query handling, retrieval workflows, and production-style agent orchestration.
