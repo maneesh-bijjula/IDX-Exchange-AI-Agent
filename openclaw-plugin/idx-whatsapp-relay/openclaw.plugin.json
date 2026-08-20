@@ -1,0 +1,28 @@
+{
+  "id": "idx-whatsapp-relay",
+  "name": "IDX WhatsApp Relay",
+  "description": "Routes permitted WhatsApp messages directly to the IDX multi-agent coordinator.",
+  "activation": {
+    "onStartup": true
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "bridgeUrl": {
+        "type": "string"
+      },
+      "userId": {
+        "type": "string"
+      },
+      "allowedSender": {
+        "type": "string"
+      },
+      "timeoutMs": {
+        "type": "integer",
+        "minimum": 1000,
+        "maximum": 120000
+      }
+    }
+  }
+}

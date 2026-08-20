@@ -1,0 +1,12 @@
+{
+  "name": "idx-whatsapp-relay",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Routes IDX Exchange WhatsApp turns directly to the multi-agent coordinator.",
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

@@ -880,8 +880,9 @@ The implementation is split across:
 - `src/emailDraftAgent.ts` for formatted email drafts
 - `src/orchestratorCli.ts` for local requests
 - `src/multiAgentBridge.ts` for the persistent OpenClaw and WhatsApp entry point
+- `openclaw-plugin/idx-whatsapp-relay` for deterministic WhatsApp-to-coordinator routing
 - `openclaw-skills/ORCHESTRATOR_SKILL.md` for single-entry-point routing instructions
-- `tests/intentClassifier.test.ts`, `tests/emailDraftAgent.test.ts`, and `tests/orchestrator.test.ts` for Week 9 validation
+- `tests/intentClassifier.test.ts`, `tests/emailDraftAgent.test.ts`, `tests/orchestrator.test.ts`, and `tests/whatsappRelay.test.ts` for Week 9 validation
 
 Mixed specialist work runs concurrently. The handbook example routes property search and market statistics together and labels both parts of the unified response:
 
@@ -909,7 +910,41 @@ npm run week9:bridge
 
 Then send requests to `http://127.0.0.1:3125/message`. The bridge keeps structured search state and the latest unified response in memory for the process lifetime.
 
-Current validation status after Week 9: 93 automated Node tests and 3 school-district enrichment tests passing. Live smoke tests cover all five registered agents, qualitative semantic search, the handbook's mixed Pasadena query, and persistent multi-turn bridge follow-ups.
+### Deterministic WhatsApp Routing
+
+The relay plugin intercepts permitted WhatsApp turns before the general OpenClaw model runs, posts them to the Week 9 bridge, and returns the coordinator's `response` field verbatim. Slash commands such as `/new` remain available to OpenClaw.
+
+Link the versioned plugin into OpenClaw once:
+
+```bash
+cd "/Users/maneeshbijjula/Documents/idx-internship/openclaw"
+pnpm openclaw plugins install -l "/Users/maneeshbijjula/Documents/New project/IDX-Exchange-AI-Agent/openclaw-plugin/idx-whatsapp-relay"
+```
+
+Enable trusted conversation access and configure the local coordinator under `plugins.entries.idx-whatsapp-relay` in `~/.openclaw/openclaw.json`:
+
+```json
+{
+  "enabled": true,
+  "hooks": {
+    "allowConversationAccess": true
+  },
+  "config": {
+    "bridgeUrl": "http://127.0.0.1:3125/message",
+    "userId": "whatsapp-demo-user",
+    "allowedSender": "+18582411191",
+    "timeoutMs": 65000
+  }
+}
+```
+
+Restart the gateway after changing plugin configuration:
+
+```bash
+pnpm openclaw gateway restart
+```
+
+Current validation status after Week 9: 97 automated Node tests and 3 school-district enrichment tests passing. Live smoke tests cover all five registered agents, qualitative semantic search, the handbook's mixed Pasadena query, persistent multi-turn bridge follow-ups, and deterministic WhatsApp relay behavior.
 
 ## Notes
 
