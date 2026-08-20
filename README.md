@@ -787,6 +787,79 @@ The CLI also accepts an indexed listing ID or display ID. A live validation for 
 
 Current validation status after Week 7: 67 automated Node tests passing, plus a live recommendation and MySQL comp-validation smoke test.
 
+## Week 8: Retrieval-Augmented Generation
+
+Week 8 adds a document-aware RAG assistant for real estate terminology and MLS schema questions. The assistant retrieves relevant passages from indexed source documents, gives those passages to the generation model as constrained context, and returns the answer with visible source citations.
+
+The indexed knowledge sources are:
+
+- Real Estate Data Analyst Primer for terminology such as DOM and sale-to-list ratio
+- Trestle Property Metadata for RESO-standard field definitions
+- Fresh Week 5 market summaries for Irvine, San Diego, and Pasadena
+- Handbook schema reference pages 4–5 for IDX legacy fields such as `L_SystemPrice`, `L_Keyword2`, `LM_Dec_3`, and `LM_Int2_3`
+
+The implementation is split across:
+
+- `src/ragKnowledge.ts` for PDF extraction, chunking, embedding, cosine retrieval, source citations, and grounded generation
+- `src/ragIndexCli.ts` for building the reusable local knowledge index
+- `src/ragCli.ts` for asking knowledge questions locally or through OpenClaw
+- `openclaw-skills/RAG_SKILL.md` for knowledge-question routing
+- `tests/ragKnowledge.test.ts` for deterministic indexing, retrieval, prompt, citation, and persistence validation
+
+### RAG Pipeline
+
+The indexing flow:
+
+1. Extract text page by page from the three local PDFs.
+2. Generate current Week 5 market summaries from MySQL.
+3. Split each page into overlapping chunks while preserving source and page metadata.
+4. Embed chunks in batches with `text-embedding-3-small`.
+5. Save the metadata and vectors to `data/rag-knowledge-index.json`.
+
+For each question, the assistant embeds the query, ranks chunks by cosine similarity, and sends only the retrieved context to the configured OpenAI generation model. The prompt treats retrieved text as reference data, requires citations, and directs the model to say when the indexed sources do not contain enough information.
+
+The generated index is reproducible runtime data and is ignored by Git.
+
+### Configure Source Paths
+
+The default file names are discovered in `~/Downloads`. Custom locations can be set in `.env`:
+
+```env
+REAL_ESTATE_PRIMER_PATH=/absolute/path/Real_Estate_Primer.pdf
+TRESTLE_METADATA_PATH=/absolute/path/Trestle Property MetaData.pdf
+IDX_HANDBOOK_PATH=/absolute/path/AI_Agentic_Engineer_Intern_Handbook_2026_v2.pdf
+RAG_INDEX_PATH=data/rag-knowledge-index.json
+OPENAI_RAG_MODEL=gpt-4o-mini
+```
+
+### Build and Test Week 8
+
+Build or refresh the index:
+
+```bash
+npm run week8:index
+```
+
+Run the three handbook checks:
+
+```bash
+npm run week8:ask -- "What does DOM mean?"
+npm run week8:ask -- "What columns are in california_sold?"
+npm run week8:ask -- "What is a list-to-close ratio?"
+```
+
+The assistant also covers the handbook's legacy-field gap:
+
+```bash
+npm run week8:ask -- "What does L_SystemPrice mean in rets_property?"
+```
+
+### Source Scope
+
+The production examples mentioning separate IDX internal documentation and California legal/disclosure summaries do not correspond to provided source files, so they are not indexed. The assistant does not invent those materials and will report when a question is outside the available sources. The handbook schema pages are indexed as the fourth source to cover the legacy `rets_property` names that do not appear in Trestle metadata.
+
+Current validation status after Week 8: 74 automated Node tests passing. The live index contains 171 chunks from four sources, and all three handbook questions pass end-to-end with cited answers.
+
 ## Notes
 
 This repository will be updated week by week as the project expands from architecture fundamentals into live query handling, retrieval workflows, and production-style agent orchestration.

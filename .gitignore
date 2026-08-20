@@ -16,6 +16,8 @@ pids
 *.pid.lock
 data/semantic-listing-index.json
 data/semantic-listing-index.json.tmp
+data/rag-knowledge-index.json
+data/rag-knowledge-index.json.tmp
 data/school-districts/
 .venv-school-districts/
 __pycache__/
