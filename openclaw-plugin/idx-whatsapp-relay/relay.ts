@@ -92,13 +92,15 @@ export async function relayToCoordinator(
       body: JSON.stringify({ userId: config.userId, message: message.trim() }),
       signal: controller.signal,
     });
-    if (!response.ok) throw new Error("IDX coordinator returned a non-success response");
-
     const payload = await response.json();
     const text =
       typeof payload === "object" && payload !== null && "response" in payload
         ? (payload as { response?: unknown }).response
         : null;
+    if (!response.ok) {
+      if (typeof text === "string" && text.trim()) return text.trim();
+      throw new Error("IDX coordinator returned a non-success response");
+    }
     if (typeof text !== "string" || !text.trim()) {
       throw new Error("IDX coordinator response did not include text");
     }

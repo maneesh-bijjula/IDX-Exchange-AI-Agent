@@ -1,6 +1,6 @@
 import http from "node:http";
 import { closeDatabase } from "./database.ts";
-import { orchestrate } from "./orchestrator.ts";
+import { onWhatsAppMessage } from "./whatsappCommunication.ts";
 
 const DEFAULT_PORT = 3125;
 const port = Number(process.env.IDX_ORCHESTRATOR_PORT ?? DEFAULT_PORT);
@@ -43,9 +43,10 @@ const server = http.createServer(async (request, response) => {
   if (request.method === "GET" && request.url === "/health") {
     sendJson(response, 200, {
       ok: true,
-      service: "idx-multi-agent-orchestrator",
+      service: "idx-whatsapp-communication-layer",
       port,
       agents: 5,
+      channel: "whatsapp",
     });
     return;
   }
@@ -67,7 +68,8 @@ const server = http.createServer(async (request, response) => {
       return;
     }
 
-    sendJson(response, 200, await orchestrate(message, userId));
+    const result = await onWhatsAppMessage(message, userId);
+    sendJson(response, result.ok ? 200 : 500, result);
   } catch (error) {
     const nested = error instanceof AggregateError ? error.errors[0] : null;
     sendJson(response, 500, {

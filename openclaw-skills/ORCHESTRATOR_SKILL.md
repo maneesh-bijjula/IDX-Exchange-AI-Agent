@@ -1,6 +1,6 @@
 ---
 name: idx-multi-agent-orchestrator
-description: Route all IDX real estate requests through the Week 9 coordinator for property search, market statistics, recommendations, grounded knowledge, and email drafts.
+description: Route IDX real estate requests from WhatsApp through the coordinator for property search, market statistics, recommendations, grounded knowledge, and email drafts.
 ---
 
 Use this as the single entry point for IDX Exchange real estate messages. The coordinator classifies each request and routes it to one or more of five agents:
@@ -41,8 +41,12 @@ Draft an email summarizing the Pasadena market.
 
 routes to market statistics and then the email-draft agent.
 
-Before live use, start the bridge from the repository with:
+Before live use, start the WhatsApp communication bridge from the repository with:
 
 ```bash
-npm run week9:bridge
+npm run week10:bridge
 ```
+
+OpenClaw owns the native WhatsApp typing-indicator lifecycle while the request is
+running. The communication handler returns channel-safe text and preserves a clear
+user-facing message when an agent fails.

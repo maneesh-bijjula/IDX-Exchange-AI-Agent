@@ -76,3 +76,21 @@ test("returns a clear deterministic response when the coordinator is unavailable
   assert.equal(result?.handled, true);
   assert.equal(result?.reply?.text, BRIDGE_UNAVAILABLE_MESSAGE);
 });
+
+test("preserves a user-facing orchestration error from the communication layer", async () => {
+  const handler = createWhatsappRelayHandler(resolveRelayConfig(), {
+    fetcher: async () => ({
+      ok: false,
+      json: async () => ({
+        response: "Sorry, I hit an issue while processing that request. Please try again.",
+      }),
+    }),
+  });
+
+  const result = await handler({ cleanedBody: "Show Irvine homes" }, whatsappContext);
+  assert.equal(result?.handled, true);
+  assert.equal(
+    result?.reply?.text,
+    "Sorry, I hit an issue while processing that request. Please try again.",
+  );
+});

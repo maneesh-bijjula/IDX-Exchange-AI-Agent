@@ -946,6 +946,29 @@ pnpm openclaw gateway restart
 
 Current validation status after Week 9: 97 automated Node tests and 3 school-district enrichment tests passing. Live smoke tests cover all five registered agents, qualitative semantic search, the handbook's mixed Pasadena query, persistent multi-turn bridge follow-ups, and deterministic WhatsApp relay behavior.
 
+## Week 10: WhatsApp Communication Layer
+
+Week 10 makes WhatsApp the complete conversational interface for the Week 9 coordinator. Every permitted non-command WhatsApp message is relayed through OpenClaw to one handler, routed to the required specialist agents, normalized for WhatsApp, and returned to the same conversation.
+
+The communication boundary is implemented in:
+
+- `src/whatsappCommunication.ts` for typing-indicator hooks, orchestration, channel formatting, and friendly error handling
+- `src/multiAgentBridge.ts` for the persistent local HTTP entry point
+- `openclaw-plugin/idx-whatsapp-relay` for deterministic OpenClaw-to-bridge delivery
+- `tests/whatsappCommunication.test.ts` and `tests/whatsappRelay.test.ts` for channel behavior and failure coverage
+
+OpenClaw provides the native typing indicator while a WhatsApp turn is active. The handler also exposes an injectable typing hook so the behavior remains testable without a live WhatsApp connection. Formatting converts unsupported Markdown links, normalizes bold text and whitespace, labels mixed-agent sections, and avoids repeating source sections when the final result is an email draft.
+
+Start the end-to-end communication layer with:
+
+```bash
+npm run week10:bridge
+```
+
+The Week 9 bridge command remains available as a compatible alias. After the bridge and OpenClaw gateway are running, WhatsApp can handle structured or semantic property searches, market questions, recommendations, grounded knowledge questions, mixed requests, and email drafts in the same conversation.
+
+Current validation status after Week 10: 104 automated Node tests and 3 school-district enrichment tests passing. A live bridge smoke test also verified the health endpoint, a mixed Pasadena property-and-market request routed across both agents, and a stateful email follow-up using the prior turn's results.
+
 ## Notes
 
 This repository will be updated week by week as the project expands from architecture fundamentals into live query handling, retrieval workflows, and production-style agent orchestration.
