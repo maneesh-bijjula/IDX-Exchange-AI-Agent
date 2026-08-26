@@ -1,5 +1,10 @@
 import { type QueryExecutor } from "./mlsSearch.ts";
 import {
+  createOpenAIEmbeddingProvider,
+  type EmbeddingProvider,
+} from "./embeddings.ts";
+import {
+  buildListingEmbeddingText,
   cosineSimilarity,
   loadSemanticListingIndex,
   type IndexedSemanticListing,
@@ -44,6 +49,8 @@ export type RecommendationOptions = {
   index?: SemanticListingIndex;
   indexPath?: string;
   executor?: QueryExecutor;
+  targetListing?: SemanticListing;
+  embeddingProvider?: EmbeddingProvider;
 };
 
 type CompAggregateRow = {
@@ -162,6 +169,30 @@ export function findTargetListing(
       return address.length >= 5 && normalized.includes(address);
     }) ?? null
   );
+}
+
+async function resolveTargetListing(
+  index: SemanticListingIndex,
+  reference: string,
+  options: RecommendationOptions,
+): Promise<IndexedSemanticListing | null> {
+  const indexedTarget = findTargetListing(index, reference);
+  if (indexedTarget) return indexedTarget;
+  if (!options.targetListing) return null;
+
+  const embeddingProvider =
+    options.embeddingProvider ??
+    createOpenAIEmbeddingProvider({ model: index.model });
+  const [embedding] = await embeddingProvider([
+    buildListingEmbeddingText(options.targetListing),
+  ]);
+  if (!embedding || embedding.length !== index.dimensions) {
+    throw new Error(
+      `Target listing embedding has ${embedding?.length ?? 0} dimensions; expected ${index.dimensions}.`,
+    );
+  }
+
+  return { listing: options.targetListing, embedding };
 }
 
 export function rankHybridRecommendations(
@@ -358,7 +389,7 @@ export async function recommendSimilarListings(
 ): Promise<RecommendationResponse> {
   const index =
     options.index ?? (await loadSemanticListingIndex(options.indexPath));
-  const target = findTargetListing(index, reference);
+  const target = await resolveTargetListing(index, reference, options);
   if (!target) {
     throw new Error(
       `Could not find a listing matching "${reference}" in the semantic index. Use a listing ID or indexed street address.`,

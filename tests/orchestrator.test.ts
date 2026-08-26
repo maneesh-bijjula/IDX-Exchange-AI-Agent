@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  resolveRecommendationRequest,
   type AgentName,
   type AgentRegistry,
   type AgentResult,
@@ -127,6 +128,51 @@ test("routes an unclassified reply through an active property-search session", a
 
   assert.equal(response.intent, "search");
   assert.deepEqual(response.routedAgents, ["propertySearchAgent"]);
+});
+
+test("resolves ordinal recommendation follow-ups from live session results", () => {
+  updateSession("recommendation-follow-up", {
+    lastResults: [
+      {
+        id: "irvine-1",
+        title: "14612 Mulberry",
+        location: "Irvine, 92606",
+        price: 1_049_000,
+        beds: 3,
+        baths: 2,
+        sqft: 1_420,
+        type: "SingleFamilyResidence",
+        status: "Active",
+        highlights: ["Built in 1975", "6 days on market"],
+        agent: null,
+        office: null,
+      },
+      {
+        id: "irvine-2",
+        title: "164 Cherrybrook Lane",
+        location: "Irvine, 92618",
+        price: 1_180_000,
+        beds: 3,
+        baths: 3,
+        sqft: 1_353,
+        type: "SingleFamilyResidence",
+        status: "Active",
+        highlights: ["Built in 1998"],
+        agent: null,
+        office: null,
+      },
+    ],
+  });
+
+  const request = resolveRecommendationRequest(
+    "Recommend homes similar to the first Irvine listing",
+    "recommendation-follow-up",
+  );
+
+  assert.equal(request.reference, "14612 Mulberry");
+  assert.equal(request.targetListing?.city, "Irvine");
+  assert.equal(request.targetListing?.zip, "92606");
+  assert.equal(request.targetListing?.yearBuilt, 1975);
 });
 
 test("returns the handbook fallback without calling an agent", async () => {

@@ -967,7 +967,9 @@ npm run week10:bridge
 
 The Week 9 bridge command remains available as a compatible alias. After the bridge and OpenClaw gateway are running, WhatsApp can handle structured or semantic property searches, market questions, recommendations, grounded knowledge questions, mixed requests, and email drafts in the same conversation.
 
-Current validation status after Week 10: 104 automated Node tests and 3 school-district enrichment tests passing. A live bridge smoke test also verified the health endpoint, a mixed Pasadena property-and-market request routed across both agents, and a stateful email follow-up using the prior turn's results.
+Recommendation follow-ups can refer to ordinal results from the current search, such as `Recommend homes similar to the first Irvine listing`. The coordinator resolves the reference from structured session state and, when that live result is outside the saved semantic index, embeds it on demand before hybrid ranking and sold-comp validation.
+
+Current validation status after Week 10: 106 automated Node tests and 3 school-district enrichment tests passing. Live bridge smoke tests verified the health endpoint, mixed property-and-market routing, a stateful email follow-up, and a session-based recommendation from a live Irvine result outside the saved semantic index.
 
 ## Notes
 

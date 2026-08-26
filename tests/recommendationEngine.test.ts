@@ -198,6 +198,30 @@ test("runs ranking and comp validation with an injected executor", async () => {
   assert.deepEqual(calls[0], ["Residential", 6, "Pasadena", 1_560, 2_340]);
 });
 
+test("embeds a live target that is not in the saved semantic index", async () => {
+  const liveTarget = listing({
+    id: "live-irvine",
+    displayId: "LIVE-IRVINE",
+    address: "14612 Mulberry",
+    city: "Irvine",
+  });
+  const embeddingInputs: string[][] = [];
+  const response = await recommendSimilarListings("14612 Mulberry", {
+    index: index(),
+    targetListing: liveTarget,
+    embeddingProvider: async (texts) => {
+      embeddingInputs.push(texts);
+      return [[1, 0]];
+    },
+    topK: 1,
+    executor: async <T>() => [] as T[],
+  });
+
+  assert.equal(response.target.id, "live-irvine");
+  assert.equal(response.recommendations.length, 1);
+  assert.match(embeddingInputs[0][0], /14612 Mulberry|Location: Irvine/);
+});
+
 test("formats five recommendations with scores and comp evidence", () => {
   const target = listing();
   const recommendations = Array.from({ length: 5 }, (_, itemIndex) => ({

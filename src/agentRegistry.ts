@@ -7,6 +7,8 @@ import { answerMarketQuestion } from "./marketStatisticsAgent.ts";
 import { answerRagQuestion } from "./ragKnowledge.ts";
 import { answerRecommendationQuery } from "./recommendationAgent.ts";
 import { answerSemanticPropertyQuery } from "./semanticPropertyAgent.ts";
+import type { PropertyCard } from "./mlsSearch.ts";
+import type { SemanticListing } from "./semanticPropertySearch.ts";
 import { getSession } from "./userSession.ts";
 
 export type AgentName =
@@ -44,10 +46,86 @@ export const AGENT_NAMES: AgentName[] = [
   "emailDraftAgent",
 ];
 
-function recommendationReference(query: string, userId: string): string {
-  if (/\b(?:like|similar to|alternatives? (?:to|for))\b/i.test(query)) return query;
-  const lastResult = getSession(userId).lastResults[0];
-  return lastResult?.title ?? String(lastResult?.id ?? query);
+export type RecommendationRequest = {
+  reference: string;
+  targetListing?: SemanticListing;
+};
+
+function resultPosition(query: string, resultCount: number): number | null {
+  const positions: Array<[RegExp, number]> = [
+    [/\b(?:first|1st)\b/i, 0],
+    [/\b(?:second|2nd)\b/i, 1],
+    [/\b(?:third|3rd)\b/i, 2],
+    [/\b(?:fourth|4th)\b/i, 3],
+    [/\b(?:fifth|5th)\b/i, 4],
+  ];
+  const matched = positions.find(([pattern]) => pattern.test(query));
+  if (matched) return matched[1] < resultCount ? matched[1] : null;
+  if (/\blast (?:result|listing|home|property)\b/i.test(query)) {
+    return resultCount > 0 ? resultCount - 1 : null;
+  }
+  return null;
+}
+
+function cardNumber(value: unknown): number | null {
+  if (value == null || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function cardToSemanticListing(card: PropertyCard): SemanticListing {
+  const zipMatch = card.location.match(/(?:^|,\s*)(\d{5})(?:-\d{4})?$/);
+  const zip = zipMatch?.[1] ?? null;
+  const city = card.location
+    .replace(/,?\s*\d{5}(?:-\d{4})?\s*$/, "")
+    .trim() || null;
+  const highlights = card.highlights.join(". ");
+  const yearMatch = highlights.match(/\bBuilt(?: in)?\s+(\d{4})\b/i);
+
+  return {
+    id: String(card.id ?? card.title),
+    displayId: card.id == null ? null : String(card.id),
+    address: card.title,
+    city,
+    zip,
+    price: cardNumber(card.price),
+    beds: cardNumber(card.beds),
+    baths: cardNumber(card.baths),
+    sqft: cardNumber(card.sqft),
+    type: card.type,
+    status: card.status,
+    yearBuilt: yearMatch ? Number(yearMatch[1]) : null,
+    remarks:
+      highlights ||
+      `${card.type ?? "Active property"} at ${card.title} in ${card.location}.`,
+  };
+}
+
+export function resolveRecommendationRequest(
+  query: string,
+  userId: string,
+): RecommendationRequest {
+  const results = getSession(userId).lastResults;
+  const position = resultPosition(query, results.length);
+  const previousResult = position == null ? null : results[position];
+
+  if (previousResult) {
+    return {
+      reference: previousResult.title,
+      targetListing: cardToSemanticListing(previousResult),
+    };
+  }
+
+  if (/\b(?:like|similar to|alternatives? (?:to|for))\b/i.test(query)) {
+    return { reference: query };
+  }
+  const firstResult = results[0];
+  return firstResult
+    ? {
+        reference: firstResult.title,
+        targetListing: cardToSemanticListing(firstResult),
+      }
+    : { reference: query };
 }
 
 export function isSemanticPropertyRequest(query: string): boolean {
@@ -88,8 +166,10 @@ export function createDefaultAgentRegistry(): AgentRegistry {
     },
 
     async recommendationAgent(query, context) {
+      const request = resolveRecommendationRequest(query, context.userId);
       const result = await answerRecommendationQuery(
-        recommendationReference(query, context.userId),
+        request.reference,
+        { targetListing: request.targetListing },
       );
       return {
         agent: "recommendationAgent",
