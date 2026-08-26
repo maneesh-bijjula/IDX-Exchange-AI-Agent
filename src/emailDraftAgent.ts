@@ -22,6 +22,9 @@ function inferSubject(query: string, sections: EmailSourceSection[]): string {
     )?.[1] ??
     query.match(
       /\b(?:in|for|about)\s+(?:the\s+)?([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,2}?)(?=\s+(?:market|homes?|properties|listings|summary|update)\b|[,.!?]|$)/i,
+    )?.[1] ??
+    query.match(
+      /\bthe\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,2}?)\s+market\s+(?:conditions?|summary|update|trends?|statistics|stats)\b/i,
     )?.[1];
   const hasMarket = sections.some((section) => /market/i.test(section.title));
   const hasProperties = sections.some((section) =>

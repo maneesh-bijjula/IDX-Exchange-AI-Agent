@@ -72,3 +72,17 @@ test("parses a city from an email market-summary request", () => {
     },
   );
 });
+
+test("parses a city from an email request about market conditions", () => {
+  assert.deepEqual(
+    parseMarketQuestion(
+      "Draft an email summarizing these recommendations and the Irvine market conditions.",
+    ),
+    {
+      city: "Irvine",
+      zip: null,
+      months: 12,
+      metric: "summary",
+    },
+  );
+});

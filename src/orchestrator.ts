@@ -46,6 +46,28 @@ function formatCombinedResponse(sections: AgentResult[]): string {
     .join("\n\n");
 }
 
+function previousSection(memoryEntry: OrchestratorMemory | undefined): {
+  title: string;
+  message: string;
+} | null {
+  if (!memoryEntry) return null;
+  const titles: Partial<Record<OrchestratorIntent, string>> = {
+    search: "Property Search",
+    market: "Market Statistics",
+    recommend: "Recommendations",
+    knowledge: "Knowledge Answer",
+    mixed: "Previous Results",
+  };
+  const title = titles[memoryEntry.lastIntent];
+  return title ? { title, message: memoryEntry.lastResponse } : null;
+}
+
+function referencesPreviousResults(query: string): boolean {
+  return /\b(?:these|those|the|previous|earlier|above|last)\s+(?:results?|recommendations?|listings?|properties|homes?|summary|answer)\b/i.test(
+    query,
+  );
+}
+
 function followUpClassification(
   userId: string,
   classification: IntentClassification,
@@ -104,10 +126,17 @@ export async function orchestrate(
 
   let sections = domainResults;
   if (classification.intents.includes("email")) {
+    const memoryEntry = memory.get(userId);
+    const priorSection = referencesPreviousResults(normalizedQuery)
+      ? previousSection(memoryEntry)
+      : null;
+    const emailSections = priorSection
+      ? [priorSection, ...domainResults.map(({ title, message }) => ({ title, message }))]
+      : domainResults.map(({ title, message }) => ({ title, message }));
     const emailResult = await registry.emailDraftAgent(normalizedQuery, {
       userId,
-      sourceSections: domainResults.map(({ title, message }) => ({ title, message })),
-      previousResponse: memory.get(userId)?.lastResponse ?? null,
+      sourceSections: emailSections,
+      previousResponse: memoryEntry?.lastResponse ?? null,
     });
     sections = domainResults.length > 0 ? [...domainResults, emailResult] : [emailResult];
   }

@@ -28,6 +28,9 @@ const MIXED_SEARCH_CITY_PATTERN =
 const EMAIL_MARKET_CITY_PATTERN =
   /\b(?:summarize|summarise|summarizing|summarising|about)\s+(?:the\s+)?([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,2}?)\s+market\b/i;
 
+const DESCRIPTIVE_MARKET_CITY_PATTERN =
+  /\bthe\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,2}?)\s+market\s+(?:conditions?|summary|update|trends?|statistics|stats)\b/i;
+
 function toTitleCase(value: string): string {
   return value
     .trim()
@@ -72,6 +75,7 @@ export function parseMarketQuestion(question: string): ParsedMarketQuestion {
   const cityMatch =
     question.match(MIXED_SEARCH_CITY_PATTERN) ??
     question.match(EMAIL_MARKET_CITY_PATTERN) ??
+    question.match(DESCRIPTIVE_MARKET_CITY_PATTERN) ??
     question.match(CITY_PATTERN) ??
     question.match(COMMAND_CITY_PATTERN);
   const zipMatch = question.match(/\b(?:zip|postal code)?\s*(9\d{4})\b/i);

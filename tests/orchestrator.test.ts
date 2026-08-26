@@ -116,6 +116,22 @@ test("email-only requests use the previous unified response", async () => {
   assert.match(response.response, /ragAgent response/);
 });
 
+test("email requests combine previous recommendations with current market results", async () => {
+  const registry = createRegistry();
+  await orchestrate("Recommend homes like 33348 Robin Drive", "email-context-user", {
+    registry,
+  });
+  const response = await orchestrate(
+    "Draft an email summarizing these recommendations and the Irvine market conditions.",
+    "email-context-user",
+    { registry },
+  );
+
+  assert.deepEqual(response.routedAgents, ["marketStatsAgent", "emailDraftAgent"]);
+  assert.match(response.response, /recommendationAgent response/);
+  assert.match(response.response, /marketStatsAgent response/);
+});
+
 test("routes an unclassified reply through an active property-search session", async () => {
   updateSession("follow-up-user", {
     city: "Irvine",
