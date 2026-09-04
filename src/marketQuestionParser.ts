@@ -31,6 +31,12 @@ const EMAIL_MARKET_CITY_PATTERN =
 const DESCRIPTIVE_MARKET_CITY_PATTERN =
   /\bthe\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,2}?)\s+market\s+(?:conditions?|summary|update|trends?|statistics|stats)\b/i;
 
+const WEEKLY_REPORT_CITY_PATTERN =
+  /\bweekly\s+(?:real\s+estate\s+)?market\s+report\s+(?:for|in)\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,2}?)(?=\s+(?:to|for)\s+[\w.+-]+@|[,.!?]|$)/i;
+
+const WEEKLY_CITY_REPORT_PATTERN =
+  /\bweekly\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,2}?)\s+market\s+report\b/i;
+
 function toTitleCase(value: string): string {
   return value
     .trim()
@@ -74,6 +80,8 @@ function parseMetric(question: string): MarketMetric {
 export function parseMarketQuestion(question: string): ParsedMarketQuestion {
   const cityMatch =
     question.match(MIXED_SEARCH_CITY_PATTERN) ??
+    question.match(WEEKLY_REPORT_CITY_PATTERN) ??
+    question.match(WEEKLY_CITY_REPORT_PATTERN) ??
     question.match(EMAIL_MARKET_CITY_PATTERN) ??
     question.match(DESCRIPTIVE_MARKET_CITY_PATTERN) ??
     question.match(CITY_PATTERN) ??

@@ -35,6 +35,15 @@ test("classifies market email requests as mixed", async () => {
   );
 });
 
+test("classifies a recipient-addressed weekly report as market plus email", async () => {
+  assert.deepEqual(
+    await classifyIntent(
+      "Draft a weekly market report for Irvine to buyer@example.com",
+    ),
+    { intent: "mixed", intents: ["market", "email"] },
+  );
+});
+
 test("returns unknown for unrelated requests", async () => {
   assert.deepEqual(await classifyIntent("Tell me a joke"), {
     intent: "unknown",

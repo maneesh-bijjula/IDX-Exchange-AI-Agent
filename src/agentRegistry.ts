@@ -4,6 +4,10 @@ import {
   type EmailSourceSection,
 } from "./emailDraftAgent.ts";
 import { answerMarketQuestion } from "./marketStatisticsAgent.ts";
+import {
+  generateWeeklyMarketReport,
+  isWeeklyMarketReportRequest,
+} from "./weeklyMarketReport.ts";
 import { answerRagQuestion } from "./ragKnowledge.ts";
 import { answerRecommendationQuery } from "./recommendationAgent.ts";
 import { answerSemanticPropertyQuery } from "./semanticPropertyAgent.ts";
@@ -156,10 +160,12 @@ export function createDefaultAgentRegistry(): AgentRegistry {
     },
 
     async marketStatsAgent(query) {
-      const result = await answerMarketQuestion(query);
+      const result = isWeeklyMarketReportRequest(query)
+        ? await generateWeeklyMarketReport(query)
+        : await answerMarketQuestion(query);
       return {
         agent: "marketStatsAgent",
-        title: "Market Statistics",
+        title: "report" in result ? "Weekly Market Report" : "Market Statistics",
         message: result.message,
         data: result,
       };
@@ -192,6 +198,7 @@ export function createDefaultAgentRegistry(): AgentRegistry {
     async emailDraftAgent(query, context) {
       const result = await draftEmailSummary({
         query,
+        userId: context.userId,
         sections: context.sourceSections,
         previousResponse: context.previousResponse,
       });

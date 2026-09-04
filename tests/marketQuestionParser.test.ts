@@ -86,3 +86,12 @@ test("parses a city from an email request about market conditions", () => {
     },
   );
 });
+
+test("parses a city from a weekly market report email request", () => {
+  assert.equal(
+    parseMarketQuestion(
+      "Draft a weekly market report for Irvine to buyer@example.com",
+    ).city,
+    "Irvine",
+  );
+});

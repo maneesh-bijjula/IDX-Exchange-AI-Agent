@@ -67,8 +67,13 @@ function hasSearchIntent(query: string, recommend: boolean): boolean {
 }
 
 function hasEmailIntent(query: string): boolean {
-  return /\b(?:draft|write|compose|prepare|create)\b[^.!?]*\b(?:email|message|summary email)\b|\bemail (?:this|that|these|those|the results?|the summary)\b/i.test(
-    query,
+  return (
+    /\b(?:draft|write|compose|prepare|create)\b[^.!?]*\b(?:email|message|summary email)\b|\bemail (?:this|that|these|those|the results?|the summary)\b/i.test(
+      query,
+    ) ||
+    /\b(?:draft|write|compose|prepare|create)\b[^.!?]*\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(
+      query,
+    )
   );
 }
 

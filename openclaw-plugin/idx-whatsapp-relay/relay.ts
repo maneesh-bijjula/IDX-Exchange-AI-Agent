@@ -81,6 +81,7 @@ export async function relayToCoordinator(
   message: string,
   config: RelayConfig,
   fetcher: FetchLike = fetch,
+  userId = config.userId,
 ): Promise<string> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), config.timeoutMs);
@@ -89,7 +90,7 @@ export async function relayToCoordinator(
     const response = await fetcher(config.bridgeUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: config.userId, message: message.trim() }),
+      body: JSON.stringify({ userId, message: message.trim() }),
       signal: controller.signal,
     });
     const payload = await response.json();
@@ -110,6 +111,19 @@ export async function relayToCoordinator(
   }
 }
 
+export function resolveRelayUserId(
+  context: RelayContext,
+  fallback: string,
+): string {
+  return (
+    context.senderId?.trim() ||
+    context.chatId?.trim() ||
+    context.channelId?.trim() ||
+    context.sessionKey?.trim() ||
+    fallback
+  );
+}
+
 export function createWhatsappRelayHandler(
   config: RelayConfig,
   options: {
@@ -126,7 +140,12 @@ export function createWhatsappRelayHandler(
     }
 
     try {
-      const text = await relayToCoordinator(event.cleanedBody, config, options.fetcher);
+      const text = await relayToCoordinator(
+        event.cleanedBody,
+        config,
+        options.fetcher,
+        resolveRelayUserId(context, config.userId),
+      );
       return {
         handled: true,
         reply: { text },

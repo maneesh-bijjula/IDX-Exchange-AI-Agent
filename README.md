@@ -969,7 +969,76 @@ The Week 9 bridge command remains available as a compatible alias. After the bri
 
 Recommendation follow-ups can refer to ordinal results from the current search, such as `Recommend homes similar to the first Irvine listing`. The coordinator resolves the reference from structured session state and, when that live result is outside the saved semantic index, embeds it on demand before hybrid ranking and sold-comp validation.
 
-Current validation status after Week 10: 106 automated Node tests and 3 school-district enrichment tests passing. Live bridge smoke tests verified the health endpoint, mixed property-and-market routing, a stateful email follow-up, and a session-based recommendation from a live Irvine result outside the saved semantic index.
+Current validation status after Week 10: 108 automated Node tests and 3 school-district enrichment tests passing. Live bridge smoke tests verified the health endpoint, mixed property-and-market routing, a stateful email follow-up, and a session-based recommendation from a live Irvine result outside the saved semantic index.
+
+## Week 11: Email Agents and Safety Guardrails
+
+Week 11 turns the existing email content agent into an approval-gated outbound
+workflow. Property summaries, listing results, recommendation digests, and market
+reports can be previewed as email drafts, but creating a draft never sends it.
+
+The implementation is split across:
+
+- `src/emailDraftAgent.ts` for subject and body composition
+- `src/emailApprovalWorkflow.ts` for recipient validation, pending drafts,
+  ownership checks, expiration, cancellation, and one-time approval
+- `src/emailTransport.ts` for SMTP delivery through Nodemailer after approval
+- `src/weeklyMarketReport.ts` for a one-row aggregate report from
+  `california_sold`
+- `tests/emailApprovalWorkflow.test.ts` and
+  `tests/weeklyMarketReport.test.ts` for the Week 11 guardrail suite
+
+The weekly report is anchored to the latest closing date available for the chosen
+city, so historical internship snapshots still produce an accurate seven-day
+report. Its SQL is parameterized and returns one aggregate row rather than exposing
+or exporting raw MLS records.
+
+### Configure email delivery
+
+Copy the Week 11 email variables from `.env.example` into the local `.env` file.
+For Gmail, use an app password rather than the normal Google account password.
+Credentials stay in `.env`, which is ignored by Git, and are never written to logs
+or responses.
+
+```env
+EMAIL_USER=agent@example.com
+EMAIL_PASSWORD=your-app-password
+EMAIL_FROM=agent@example.com
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_SECURE=true
+```
+
+### Run the approval workflow
+
+Start the same communication bridge through the Week 11 command:
+
+```bash
+npm run week11:bridge
+```
+
+Then request a recipient-addressed draft in WhatsApp:
+
+```txt
+Draft a weekly market report for Irvine to buyer@example.com
+```
+
+The response contains the recipient, subject, complete body, pending status, draft
+ID, and exact approval and cancellation commands. Nothing is sent until the same
+WhatsApp user replies with the matching one-time command:
+
+```txt
+APPROVE EMAIL <draft-id>
+```
+
+The safety boundary rejects informal approval text, approvals from another user,
+expired drafts, cancelled drafts, repeat sends, invalid recipients, and outbound
+source sets over 50 rows. If SMTP is not configured, the draft remains pending and
+can be retried after configuration.
+
+Current validation status after Week 11: 126 automated Node tests passing. A live
+read-only database check produced an Irvine weekly report from the latest available
+seven-day period using `california_sold` aggregate analytics.
 
 ## Notes
 

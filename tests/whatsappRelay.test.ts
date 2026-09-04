@@ -5,6 +5,7 @@ import {
   BRIDGE_UNAVAILABLE_MESSAGE,
   createWhatsappRelayHandler,
   resolveRelayConfig,
+  resolveRelayUserId,
   shouldRelayWhatsappMessage,
 } from "../openclaw-plugin/idx-whatsapp-relay/relay.ts";
 
@@ -19,7 +20,7 @@ test("relays permitted WhatsApp messages and preserves coordinator text", async 
     {
       fetcher: async (_url, init) => {
         assert.deepEqual(JSON.parse(String(init?.body)), {
-          userId: "whatsapp-demo-user",
+          userId: "+18582411191",
           message: "Draft an email from these results",
         });
         return {
@@ -37,6 +38,14 @@ test("relays permitted WhatsApp messages and preserves coordinator text", async 
 
   assert.equal(result?.handled, true);
   assert.equal(result?.reply?.text, "Subject: Property Update\n\nHi,");
+});
+
+test("uses the WhatsApp sender as the stable approval owner", () => {
+  assert.equal(
+    resolveRelayUserId(whatsappContext, "whatsapp-demo-user"),
+    "+18582411191",
+  );
+  assert.equal(resolveRelayUserId({}, "whatsapp-demo-user"), "whatsapp-demo-user");
 });
 
 test("does not intercept slash commands or unrelated channels", () => {

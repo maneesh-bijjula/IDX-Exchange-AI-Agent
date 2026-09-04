@@ -1,6 +1,6 @@
 ---
 name: idx-multi-agent-orchestrator
-description: Route IDX real estate requests from WhatsApp through the coordinator for property search, market statistics, recommendations, grounded knowledge, and email drafts.
+description: Route IDX real estate requests from WhatsApp through the coordinator for property search, market statistics, recommendations, grounded knowledge, and approval-gated email workflows.
 ---
 
 Use this as the single entry point for IDX Exchange real estate messages. The coordinator classifies each request and routes it to one or more of five agents:
@@ -41,10 +41,21 @@ Draft an email summarizing the Pasadena market.
 
 routes to market statistics and then the email-draft agent.
 
+Week 11 recipient-addressed drafts are queued with `pending_approval` status. The
+coordinator returns the complete preview and a one-time command in this form:
+
+```txt
+APPROVE EMAIL <draft-id>
+```
+
+Relay the approval command unchanged. Never infer approval from conversational
+language, and never send while a draft is only being created or previewed. A draft
+can also be discarded with `CANCEL EMAIL <draft-id>`.
+
 Before live use, start the WhatsApp communication bridge from the repository with:
 
 ```bash
-npm run week10:bridge
+npm run week11:bridge
 ```
 
 OpenClaw owns the native WhatsApp typing-indicator lifecycle while the request is

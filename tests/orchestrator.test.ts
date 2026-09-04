@@ -13,6 +13,7 @@ import {
   orchestrate,
 } from "../src/orchestrator.ts";
 import { clearAllSessions, updateSession } from "../src/userSession.ts";
+import { clearEmailDrafts, queueEmailDraft } from "../src/emailApprovalWorkflow.ts";
 
 const TITLES: Record<AgentName, string> = {
   propertySearchAgent: "Property Search",
@@ -46,6 +47,7 @@ function createRegistry(overrides: Partial<AgentRegistry> = {}): AgentRegistry {
 test.beforeEach(() => {
   clearAllSessions();
   clearOrchestratorMemory();
+  clearEmailDrafts();
 });
 
 test("routes single intents to the correct registered agent", async () => {
@@ -200,4 +202,33 @@ test("returns the handbook fallback without calling an agent", async () => {
   assert.deepEqual(response.routedAgents, []);
   assert.match(response.response, /not sure how to help/i);
   assert.equal(getOrchestratorMemory("unknown-user")?.lastIntent, "unknown");
+});
+
+test("handles an approved email before ordinary intent classification", async () => {
+  const draft = queueEmailDraft({
+    id: "approval123",
+    userId: "approval-user",
+    to: "buyer@example.com",
+    subject: "Weekly update",
+    body: "Market report",
+  });
+  let sends = 0;
+  const response = await orchestrate(
+    `APPROVE EMAIL ${draft.id}`,
+    "approval-user",
+    {
+      classifier: async () => {
+        throw new Error("approval commands must bypass classification");
+      },
+      emailSender: async () => {
+        sends += 1;
+        return { messageId: "sent-1" };
+      },
+    },
+  );
+
+  assert.equal(sends, 1);
+  assert.equal(response.intent, "email");
+  assert.deepEqual(response.routedAgents, ["emailDraftAgent"]);
+  assert.match(response.response, /Email sent to buyer@example.com/);
 });

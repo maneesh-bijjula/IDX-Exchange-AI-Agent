@@ -11,6 +11,8 @@ import {
   type OrchestratorIntent,
 } from "./intentClassifier.ts";
 import { getSession } from "./userSession.ts";
+import { handleEmailWorkflowCommand } from "./emailApprovalWorkflow.ts";
+import type { EmailSender } from "./emailTransport.ts";
 
 export type OrchestratorResponse = {
   response: string;
@@ -23,6 +25,7 @@ export type OrchestratorResponse = {
 export type OrchestratorOptions = {
   registry?: AgentRegistry;
   classifier?: (query: string) => Promise<IntentClassification>;
+  emailSender?: EmailSender;
 };
 
 type OrchestratorMemory = {
@@ -95,6 +98,29 @@ export async function orchestrate(
   options: OrchestratorOptions = {},
 ): Promise<OrchestratorResponse> {
   const normalizedQuery = query.replace(/\s+/g, " ").trim();
+  const emailCommand = await handleEmailWorkflowCommand(normalizedQuery, userId, {
+    sender: options.emailSender,
+  });
+  if (emailCommand.handled) {
+    const emailResult: AgentResult = {
+      agent: "emailDraftAgent",
+      title: "Email Approval",
+      message: emailCommand.message ?? "Email action completed.",
+      data: emailCommand.draft,
+    };
+    memory.set(userId, {
+      lastResponse: emailResult.message,
+      lastIntent: "email",
+    });
+    return {
+      response: emailResult.message,
+      intent: "email",
+      intents: ["email"],
+      routedAgents: ["emailDraftAgent"],
+      sections: [emailResult],
+    };
+  }
+
   const registry = options.registry ?? createDefaultAgentRegistry();
   const classifier = options.classifier ?? classifyIntent;
   const classification = followUpClassification(
