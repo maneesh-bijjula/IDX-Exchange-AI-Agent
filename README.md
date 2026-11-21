@@ -4,7 +4,15 @@ Production-style multi-agent real estate assistant built with OpenClaw, OpenAI, 
 
 ## Project Objective
 
-Build a multi-agent AI assistant for real estate search and market intelligence. The system will let users search active MLS listings, ask market questions, receive property recommendations, and interact through WhatsApp using an OpenClaw-based agent runtime.
+This internship capstone integrates property search, market analytics, recommendations, document-grounded answers, and approval-gated email delivery into one WhatsApp assistant. Users interact through OpenClaw while a TypeScript coordinator routes requests to five specialized agents backed by MySQL and local embedding indexes.
+
+## Capstone Documentation
+
+- [Week 12: Final Capstone](#week-12-final-capstone) — integrated capabilities and demonstrated workflow
+- [Architecture flow](#architecture-flow) — runtime, agents, data sources, and approval boundary
+- [Schema and field-usage notes](docs/schema-notes.md) — database mappings, calculations, and data limitations
+- [Demo walkthrough](docs/capstone-demo.md) — the verified WhatsApp sequence and email approval steps
+- [Project reflection](docs/reflection.md) — what worked, engineering lessons, and future improvements
 
 ## Week 0 Status
 
@@ -20,7 +28,7 @@ The following tables were imported and cross-checked successfully:
 - **rets_property**: 53,122 rows
 - **california_sold**: 87,157 rows
 
-## Planned Agent Modules
+## Implemented Agent Modules
 
 - Property search assistant
 - Market analytics assistant
@@ -31,43 +39,62 @@ The following tables were imported and cross-checked successfully:
 
 ## Week 1: Architecture Fundamentals
 
-This week focuses on understanding the OpenClaw architecture and documenting how user messages flow through the system.
+Week 1 established the OpenClaw architecture and documented how user messages flow through the system. The diagram below reflects the final integrated implementation.
 
 ## Core Concepts
 
-OpenClaw is the orchestration layer that connects user messages, session state, skills, tools, and database-backed retrieval into one conversational workflow. The goal of Week 1 is to understand the moving parts clearly enough to explain how a message travels from WhatsApp into the system and back to the user as a response.
+OpenClaw provides the channel runtime. The project's relay sends permitted WhatsApp messages to a local HTTP bridge, where the TypeScript coordinator selects specialized agents, combines their results, and returns a formatted response. Application session state stores structured search preferences separately from OpenClaw's conversation context.
 
 ## Architecture Flow
 
 ```mermaid
 flowchart TD
-    A[User on WhatsApp] --> B[OpenClaw WhatsApp Channel]
-    B --> C[OpenClaw Runtime]
-    C --> D[Session Memory]
-    C --> E[Skill Router]
+    user["User on WhatsApp"] --> channel["OpenClaw channel and sender-aware relay"]
+    channel --> bridge["Local HTTP bridge and WhatsApp handler"]
+    bridge --> coordinator["Coordinator: intent routing and parallel domain calls"]
+    coordinator <--> memory["In-memory search state and response history"]
 
-    E --> F[Property Search Agent]
-    E --> G[Market Analytics Agent]
-    E --> H[Recommendation Agent]
-    E --> I[RAG Knowledge Agent]
-    E --> J[Email Draft Agent]
+    coordinator --> property["Property search agent"]
+    coordinator --> market["Market statistics agent"]
+    coordinator --> recommend["Recommendation agent"]
+    coordinator --> rag["RAG knowledge agent"]
 
-    F --> K[MySQL: rets_property]
-    G --> L[MySQL: california_sold]
-    H --> K
-    H --> L
-    I --> M[Indexed Docs and MLS Field Definitions]
-    J --> N[Human Approval Gate]
+    active[("MySQL: rets_property")] -->|"Filtered rows"| property
+    active -->|"Active inventory count"| market
+    sold[("MySQL: california_sold")] -->|"Sales and weekly aggregates"| market
+    sold -->|"Comparable sales"| recommend
+    active -->|"Offline listing-text embedding"| vectors[("Local listing vector index")]
+    vectors -->|"Semantic ranking"| property
+    vectors -->|"Hybrid ranking candidates"| recommend
+    memory -->|"Selected structured-search result"| recommend
+    district[("MySQL: property_school_district")] -->|"District labels for semantic results"| property
 
-    K --> O[Formatted Agent Response]
-    L --> O
-    M --> O
-    N --> O
+    sources["Primer, metadata, handbook schema, and market summaries"] -->|"Offline chunking and embedding"| knowledge[("Local RAG index")]
+    knowledge -->|"Retrieved passages"| rag
+    rag --> generation["OpenAI generation with source citations"]
 
-    O --> C
-    C --> B
-    B --> A
+    property --> results["Collected specialist results"]
+    market --> results
+    recommend --> results
+    generation --> results
+    coordinator -->|"Email intent"| email["Email draft agent"]
+    results -->|"Content for requested email"| email
+    memory -->|"Previous response when requested"| email
+    email --> pending["Pending draft and preview"]
+    pending --> reply["Formatted WhatsApp response"]
+    results --> reply
+
+    coordinator -->|"Separate approval or cancellation command"| approval["Draft ownership, expiry, and status checks"]
+    pending --> approval
+    approval -->|"Valid explicit approval"| smtp["Nodemailer SMTP delivery"]
+    smtp --> inbox["Recipient inbox"]
+    smtp -->|"Send confirmation"| reply
+    approval -->|"Cancellation or rejection"| reply
+    reply --> channel
+    channel --> user
 ```
+
+The listing and RAG indexes are built separately and reused at query time. OpenAI embeddings encode semantic queries and listing targets that are outside the saved index. Mixed domain requests run concurrently; email drafting waits for the required content. Sending requires a separate approval command. Search sessions, response history, and pending drafts currently live in process memory.
 
 ## Key Components
 
@@ -255,7 +282,7 @@ Example live results returned from the local database:
 
 I also added a sold comps query for `california_sold`. It searches recent residential closed sales by city and month window, then sorts by the most recent close date.
 
-This prepares the project for market comparison workflows such as:
+This query layer supports market comparison workflows such as:
 
 - "Show recent sold comps in Irvine"
 - "Compare this listing to nearby closed sales"
@@ -436,7 +463,7 @@ curl -s http://127.0.0.1:3124/message \
   -d '{"userId":"whatsapp-demo-user","message":"Under $1.2M"}'
 ```
 
-The same session will remember the city from the first turn and merge the budget from the second turn.
+The same session remembers the city from the first turn and merges the budget from the second turn.
 
 For live WhatsApp testing, make sure OpenClaw is routing this direct chat to the bridge instead of the default coding assistant. The OpenClaw config should allow `exec`/`process`, keep WhatsApp in `selfChatMode`, and set the direct chat prompt for both the E.164-style peer id and the normalized id:
 
@@ -705,7 +732,7 @@ The implementation is additive, so it does not alter the imported `rets_property
 - `scripts/enrich_school_districts.py` downloads and processes the boundary data
 - `property_school_district` stores one mapping row per listing in MySQL
 - `data/school-districts/property-school-district-mapping.csv` is the saved enriched dataset
-- `src/schoolDistrict.ts` provides a parameterized lookup for future agents
+- `src/schoolDistrict.ts` provides parameterized district lookups used by semantic property results
 - `tests/test_school_district_enrichment.py` validates unified filtering and spatial mapping
 
 ### Set Up GeoPandas
@@ -1039,3 +1066,32 @@ can be retried after configuration.
 Current validation status after Week 11: 126 automated Node tests passing. A live
 read-only database check produced an Irvine weekly report from the latest available
 seven-day period using `california_sold` aggregate analytics.
+
+## Week 12: Final Capstone
+
+The capstone integrates the completed weekly modules into the **IDX Multi-Agent Real Estate Assistant**. One WhatsApp entry point supports structured property searches, multi-turn refinement, market analysis, semantic discovery, recommendations with comparable-sale evidence, cited knowledge answers, and email delivery after explicit approval.
+
+### Demonstrated Workflow
+
+The September 11, 2026 live validation exercised the following sequence:
+
+1. A mixed San Diego condo-search and housing-supply question returned property cards and a citywide market summary.
+2. A follow-up added minimum area and bathroom requirements while retaining the city, budget, property type, and bedroom preference.
+3. A descriptive mountain-home query returned semantic matches with school-district labels; an explicit listing-address follow-up produced hybrid recommendations and comp evidence.
+4. A question about the list-to-close ratio returned an explanation with document citations.
+5. A San Diego weekly report was previewed in WhatsApp, explicitly approved, and received in Gmail.
+
+The [demo walkthrough](docs/capstone-demo.md) records the successful message wording and expected behavior. These are historical validation results against the internship dataset; later results depend on the database, saved indexes, and query date.
+
+### Final Project Materials
+
+- The architecture diagram above documents the final agent flow, both MLS tables, local indexes, and email approval boundary.
+- [Schema notes](docs/schema-notes.md) explain the fields used by search, analytics, recommendations, and school-district enrichment.
+- [Project reflection](docs/reflection.md) covers integration lessons and improvements for deployment beyond the internship environment.
+- A backup demo recording is not included in this repository.
+
+### Validation and Scope
+
+The recorded completion checks passed **126 Node tests and 3 Python school-district tests**, alongside the live WhatsApp and email validation. The imported tables contain **140,279 records** in total; the demonstrated semantic index contains **1,000 listings**, and the RAG index contains **171 chunks from four sources**. These are distinct data scopes.
+
+The internship implementation is complete as an integrated local capstone. Persistent sessions and drafts, broader language-routing coverage, automated index refresh, and deployment hardening are future improvements described in the reflection.
