@@ -1039,7 +1039,3 @@ can be retried after configuration.
 Current validation status after Week 11: 126 automated Node tests passing. A live
 read-only database check produced an Irvine weekly report from the latest available
 seven-day period using `california_sold` aggregate analytics.
-
-## Notes
-
-This repository will be updated week by week as the project expands from architecture fundamentals into live query handling, retrieval workflows, and production-style agent orchestration.
